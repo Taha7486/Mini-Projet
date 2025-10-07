@@ -1,10 +1,10 @@
 -- Campus Events Management System Database Schema
 -- Drop existing tables if they exist
 DROP TABLE IF EXISTS attestations;
-DROP TABLE IF EXISTS inscrit;
-DROP TABLE IF EXISTS evenements;
+DROP TABLE IF EXISTS registered;
+DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS organizer_requests;
-DROP TABLE IF EXISTS organisateurs;
+DROP TABLE IF EXISTS organizers;
 DROP TABLE IF EXISTS clubs;
 DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS participants;
@@ -55,9 +55,9 @@ CREATE TABLE clubs (
     INDEX idx_name (nom)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Organisateurs table (organizers)
-CREATE TABLE organisateurs (
-    organisateur_id INT PRIMARY KEY AUTO_INCREMENT,
+-- Organizers table (organizers)
+CREATE TABLE organizers (
+    organizer_id INT PRIMARY KEY AUTO_INCREMENT,
     participant_id INT NOT NULL,
     club_id INT NOT NULL,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -82,8 +82,8 @@ CREATE TABLE organizer_requests (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Evenements table (events)
-CREATE TABLE evenements (
+-- Events table (events)
+CREATE TABLE events (
     event_id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,
@@ -98,20 +98,20 @@ CREATE TABLE evenements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (club_id) REFERENCES clubs(club_id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES organisateurs(organisateur_id),
+    FOREIGN KEY (created_by) REFERENCES organizers(organizer_id),
     INDEX idx_date (date_event),
     INDEX idx_club (club_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Inscrit table (event registrations)
-CREATE TABLE inscrit (
+-- Registered table (event registrations)
+CREATE TABLE registered (
     registration_id INT PRIMARY KEY AUTO_INCREMENT,
     participant_id INT NOT NULL,
     event_id INT NOT NULL,
     registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     confirmed BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (participant_id) REFERENCES participants(participant_id) ON DELETE CASCADE,
-    FOREIGN KEY (event_id) REFERENCES evenements(event_id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE,
     UNIQUE KEY unique_registration (participant_id, event_id),
     INDEX idx_event (event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -122,14 +122,14 @@ CREATE TABLE attestations (
     registration_id INT NOT NULL,
     pdf_path VARCHAR(255),
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (registration_id) REFERENCES inscrit(registration_id) ON DELETE CASCADE,
+    FOREIGN KEY (registration_id) REFERENCES registered(registration_id) ON DELETE CASCADE,
     UNIQUE KEY unique_attestation (registration_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert default admin account
 -- Password: Admin123! (hashed with bcrypt)
 INSERT INTO accounts (nom, email, password) VALUES 
-('System Administrator', 'admin@campus.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
+('System Administrator', 'admin@campus.edu', '$2y$10$.Xfh4gD.zMkeUEMOQ2..5u4XF6NiMp30yetYjiUZc1qOMd5IG0t7a');
 
 INSERT INTO admins (account_id) VALUES (1);
 
