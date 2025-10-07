@@ -31,7 +31,7 @@ class Club {
 
     // Add organizer to club
     public function addOrganizer($participant_id) {
-        $query = "INSERT IGNORE INTO organisateurs 
+        $query = "INSERT IGNORE INTO organizers 
                   SET participant_id=:participant_id, club_id=:club_id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":participant_id", $participant_id);
@@ -42,8 +42,8 @@ class Club {
     // List events for this club
     public function listEvents() {
         $query = "SELECT e.*, COUNT(i.registration_id) as registered_count
-                  FROM evenements e
-                  LEFT JOIN inscrit i ON e.event_id = i.event_id
+                  FROM events e
+                  LEFT JOIN registered i ON e.event_id = i.event_id
                   WHERE e.club_id = :club_id
                   GROUP BY e.event_id
                   ORDER BY e.date_event ASC";

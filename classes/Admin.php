@@ -52,8 +52,8 @@ class Admin extends Account {
     // Get all clubs
     public function getClubs() {
         $query = "SELECT c.*, a.nom as created_by_name,
-                  (SELECT COUNT(*) FROM organisateurs WHERE club_id = c.club_id) as organizer_count,
-                  (SELECT COUNT(*) FROM evenements WHERE club_id = c.club_id) as event_count
+                  (SELECT COUNT(*) FROM organizers WHERE club_id = c.club_id) as organizer_count,
+                  (SELECT COUNT(*) FROM events WHERE club_id = c.club_id) as event_count
                   FROM clubs c
                   INNER JOIN admins ad ON c.created_by = ad.admin_id
                   INNER JOIN accounts a ON ad.account_id = a.id
@@ -68,7 +68,7 @@ class Admin extends Account {
     // Get club organizers
     public function getClubOrganizers($club_id) {
         $query = "SELECT p.participant_id, a.nom, a.email, p.student_id, p.department
-                  FROM organisateurs o
+                  FROM organizers o
                   INNER JOIN participants p ON o.participant_id = p.participant_id
                   INNER JOIN accounts a ON p.account_id = a.id
                   WHERE o.club_id = :club_id";
@@ -122,8 +122,8 @@ class Admin extends Account {
         $updateStmt->bindParam(":decided_by", $this->admin_id);
         $updateStmt->execute();
 
-        // Add to organisateurs table
-        $addQuery = "INSERT IGNORE INTO organisateurs 
+        // Add to organizers table
+        $addQuery = "INSERT IGNORE INTO organizers 
                      SET participant_id=:participant_id, club_id=:club_id";
         $addStmt = $this->conn->prepare($addQuery);
         $addStmt->bindParam(":participant_id", $request['participant_id']);
@@ -177,8 +177,8 @@ class Admin extends Account {
     public function manageUsers() {
         $query = "SELECT p.participant_id, p.student_id, p.year, p.department, p.phone_number, p.role,
                   a.nom, a.email,
-                  (SELECT COUNT(*) FROM inscrit WHERE participant_id = p.participant_id) as events_registered,
-                  (SELECT COUNT(*) FROM organisateurs WHERE participant_id = p.participant_id) as clubs_count
+                  (SELECT COUNT(*) FROM registered WHERE participant_id = p.participant_id) as events_registered,
+                  (SELECT COUNT(*) FROM organizers WHERE participant_id = p.participant_id) as clubs_count
                   FROM participants p
                   INNER JOIN accounts a ON p.account_id = a.id
                   ORDER BY a.nom ASC";

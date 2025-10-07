@@ -1,7 +1,7 @@
 <?php
-class Evenement {
+class Event {
     private $conn;
-    private $table = "evenements";
+    private $table = "events";
 
     public $event_id;
     public $title;
@@ -25,7 +25,7 @@ class Evenement {
                   a.nom as creator_name
                   FROM " . $this->table . " e
                   INNER JOIN clubs c ON e.club_id = c.club_id
-                  LEFT JOIN organisateurs o ON e.created_by = o.organisateur_id
+                  LEFT JOIN organizers o ON e.created_by = o.organizer_id
                   LEFT JOIN participants p ON o.participant_id = p.participant_id
                   LEFT JOIN accounts a ON p.account_id = a.id
                   ORDER BY e.date_event ASC";
@@ -41,7 +41,7 @@ class Evenement {
                   a.nom as creator_name
                   FROM " . $this->table . " e
                   INNER JOIN clubs c ON e.club_id = c.club_id
-                  LEFT JOIN organisateurs o ON e.created_by = o.organisateur_id
+                  LEFT JOIN organizers o ON e.created_by = o.organizer_id
                   LEFT JOIN participants p ON o.participant_id = p.participant_id
                   LEFT JOIN accounts a ON p.account_id = a.id
                   WHERE e.event_id = :event_id";

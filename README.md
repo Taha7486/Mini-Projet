@@ -24,9 +24,9 @@ This is a PHP/MySQL implementation of the Campus Events Management System.
 │   ├── Account.php
 │   ├── Participant.php
 │   ├── Admin.php
-│   ├── Organisateur.php
+│   ├── Organizer.php
 │   ├── Club.php
-│   └── Evenement.php
+│   └── Event.php
 ├── config/
 │   └── database.php   # Database connection
 ├── database/

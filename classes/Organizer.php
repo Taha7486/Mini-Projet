@@ -1,10 +1,10 @@
 <?php
 require_once 'Participant.php';
 
-class Organisateur extends Participant {
-    private $org_table = "organisateurs";
+class Organizer extends Participant {
+    private $org_table = "organizers";
 
-    public $organisateur_id;
+    public $organizer_id;
 
     public function __construct($db) {
         parent::__construct($db);
@@ -24,7 +24,7 @@ class Organisateur extends Participant {
 
     // Check if participant is organizer for club
     public function isOrganizerForClub($participant_id, $club_id) {
-        $query = "SELECT organisateur_id FROM " . $this->org_table . " 
+        $query = "SELECT organizer_id FROM " . $this->org_table . " 
                   WHERE participant_id = :participant_id AND club_id = :club_id";
 
         $stmt = $this->conn->prepare($query);
@@ -37,7 +37,7 @@ class Organisateur extends Participant {
 
     // Create event
     public function createEvent($eventData) {
-        $query = "INSERT INTO evenements 
+        $query = "INSERT INTO events 
                   SET title=:title, description=:description, location=:location,
                       date_event=:date_event, time_event=:time_event, capacity=:capacity,
                       image_url=:image_url, club_id=:club_id, created_by=:created_by";
@@ -51,14 +51,14 @@ class Organisateur extends Participant {
         $stmt->bindParam(":capacity", $eventData['capacity']);
         $stmt->bindParam(":image_url", $eventData['image_url']);
         $stmt->bindParam(":club_id", $eventData['club_id']);
-        $stmt->bindParam(":created_by", $this->organisateur_id);
+        $stmt->bindParam(":created_by", $this->organizer_id);
 
         return $stmt->execute();
     }
 
     // Modify event
     public function modifyEvent($event_id, $eventData) {
-        $query = "UPDATE evenements 
+        $query = "UPDATE events 
                   SET title=:title, description=:description, location=:location,
                       date_event=:date_event, time_event=:time_event, capacity=:capacity,
                       image_url=:image_url
@@ -73,19 +73,19 @@ class Organisateur extends Participant {
         $stmt->bindParam(":time_event", $eventData['time_event']);
         $stmt->bindParam(":capacity", $eventData['capacity']);
         $stmt->bindParam(":image_url", $eventData['image_url']);
-        $stmt->bindParam(":created_by", $this->organisateur_id);
+        $stmt->bindParam(":created_by", $this->organizer_id);
 
         return $stmt->execute();
     }
 
     // Delete event
     public function deleteEvent($event_id) {
-        $query = "DELETE FROM evenements 
+        $query = "DELETE FROM events 
                   WHERE event_id=:event_id AND created_by=:created_by";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":event_id", $event_id);
-        $stmt->bindParam(":created_by", $this->organisateur_id);
+        $stmt->bindParam(":created_by", $this->organizer_id);
 
         return $stmt->execute();
     }
@@ -93,11 +93,11 @@ class Organisateur extends Participant {
     // View participants of an event
     public function viewParticipants($event_id) {
         // First check if this organizer owns this event
-        $checkQuery = "SELECT event_id FROM evenements 
+        $checkQuery = "SELECT event_id FROM events 
                        WHERE event_id=:event_id AND created_by=:created_by";
         $checkStmt = $this->conn->prepare($checkQuery);
         $checkStmt->bindParam(":event_id", $event_id);
-        $checkStmt->bindParam(":created_by", $this->organisateur_id);
+        $checkStmt->bindParam(":created_by", $this->organizer_id);
         $checkStmt->execute();
 
         if($checkStmt->rowCount() == 0) {
@@ -106,7 +106,7 @@ class Organisateur extends Participant {
 
         $query = "SELECT p.participant_id, p.student_id, p.year, p.department, p.phone_number,
                   a.nom, a.email, i.registered_at
-                  FROM inscrit i
+                  FROM registered i
                   INNER JOIN participants p ON i.participant_id = p.participant_id
                   INNER JOIN accounts a ON p.account_id = a.id
                   WHERE i.event_id = :event_id
@@ -122,13 +122,13 @@ class Organisateur extends Participant {
     // Get my events (events created by this organizer)
     public function getMyEvents() {
         $query = "SELECT e.*, c.nom as club_name
-                  FROM evenements e
+                  FROM events e
                   INNER JOIN clubs c ON e.club_id = c.club_id
                   WHERE e.created_by = :created_by
                   ORDER BY e.date_event ASC";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":created_by", $this->organisateur_id);
+        $stmt->bindParam(":created_by", $this->organizer_id);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -136,7 +136,7 @@ class Organisateur extends Participant {
 
     // Get managed clubs
     public function getManagedClubs() {
-        $query = "SELECT c.*, o.organisateur_id
+        $query = "SELECT c.*, o.organizer_id
                   FROM " . $this->org_table . " o
                   INNER JOIN clubs c ON o.club_id = c.club_id
                   WHERE o.participant_id = :participant_id";
@@ -150,7 +150,7 @@ class Organisateur extends Participant {
 
     // Get my clubs (uses parent's method)
     public function getMyClubsLegacy($participant_id) {
-        $query = "SELECT c.*, o.organisateur_id
+        $query = "SELECT c.*, o.organizer_id
                   FROM " . $this->org_table . " o
                   INNER JOIN clubs c ON o.club_id = c.club_id
                   WHERE o.participant_id = :participant_id";
@@ -162,15 +162,15 @@ class Organisateur extends Participant {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Get organizer profile with organisateur_id
+    // Get organizer profile with organizer_id
     public function getProfile() {
         // First get participant profile
         if (!parent::getProfile()) {
             return false;
         }
 
-        // Then get organisateur_id from the first club they manage
-        $query = "SELECT organisateur_id FROM " . $this->org_table . " 
+        // Then get organizer_id from the first club they manage
+        $query = "SELECT organizer_id FROM " . $this->org_table . " 
                   WHERE participant_id = :participant_id LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":participant_id", $this->participant_id);
@@ -178,7 +178,7 @@ class Organisateur extends Participant {
 
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $this->organisateur_id = $row['organisateur_id'];
+            $this->organizer_id = $row['organizer_id'];
         }
 
         return true;
