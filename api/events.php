@@ -5,8 +5,8 @@ ini_set('display_errors', 0);
 
 try {
     require_once '../config/database.php';
-    require_once '../classes/Evenement.php';
-    require_once '../classes/Organisateur.php';
+    require_once '../classes/Event.php';
+    require_once '../classes/Organizer.php';
     require_once '../includes/session.php';
 
     $database = new Database();
@@ -72,7 +72,7 @@ function handleCreateEvent($db, $input) {
         throw new Exception('All fields are required');
     }
 
-    $organizer = new Organisateur($db);
+    $organizer = new Organizer($db);
     $organizer->id = $_SESSION['user_id'];
     
     if (!$organizer->getProfile()) {
@@ -122,7 +122,7 @@ function handleUpdateEvent($db, $input) {
         throw new Exception('All fields are required');
     }
 
-    $organizer = new Organisateur($db);
+    $organizer = new Organizer($db);
     $organizer->id = $_SESSION['user_id'];
     
     if (!$organizer->getProfile()) {
@@ -158,7 +158,7 @@ function handleDeleteEvent($db, $input) {
         throw new Exception('Event ID is required');
     }
 
-    $organizer = new Organisateur($db);
+    $organizer = new Organizer($db);
     $organizer->id = $_SESSION['user_id'];
     
     if (!$organizer->getProfile()) {
@@ -184,7 +184,7 @@ function handleGetParticipants($db, $input) {
         throw new Exception('Event ID is required');
     }
 
-    $organizer = new Organisateur($db);
+    $organizer = new Organizer($db);
     $organizer->id = $_SESSION['user_id'];
     
     if (!$organizer->getProfile()) {

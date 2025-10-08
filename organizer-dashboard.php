@@ -1,6 +1,6 @@
 <?php
 require_once 'config/database.php';
-require_once 'classes/Organisateur.php';
+require_once 'classes/Organizer.php';
 require_once 'classes/Club.php';
 require_once 'includes/session.php';
 
@@ -9,7 +9,7 @@ requireOrganizer();
 $database = new Database();
 $db = $database->getConnection();
 
-$organizer = new Organisateur($db);
+$organizer = new Organizer($db);
 $organizer->id = $_SESSION['user_id'];
 $organizer->participant_id = $_SESSION['participant_id'];
 $organizer->getProfile();

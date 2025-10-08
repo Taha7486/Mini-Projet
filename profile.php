@@ -11,7 +11,9 @@ $db = $database->getConnection();
 
 $participant = new Participant($db);
 $participant->id = $_SESSION['user_id'];
-$participant->participant_id = $_SESSION['participant_id'];
+if (!isAdmin()){
+    $participant->participant_id = $_SESSION['participant_id'];
+}
 $participant->getProfile();
 
 $club = new Club($db);

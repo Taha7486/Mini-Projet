@@ -1,16 +1,16 @@
 <?php
 require_once 'config/database.php';
-require_once 'classes/Evenement.php';
+require_once 'classes/Event.php';
 require_once 'classes/Club.php';
 require_once 'includes/session.php';
 
 $database = new Database();
 $db = $database->getConnection();
 
-$evenement = new Evenement($db);
+$event = new Event($db);
 $club = new Club($db);
 
-$events = $evenement->getAll();
+$events = $event->getAll();
 $clubs = $club->getAll();
 ?>
 <!DOCTYPE html>

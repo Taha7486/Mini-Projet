@@ -93,7 +93,7 @@ class Participant extends Account {
     // Register for event
     public function registerForEvent($event_id) {
         // Check if already registered
-        $checkQuery = "SELECT registration_id FROM inscrit 
+        $checkQuery = "SELECT registration_id FROM registered 
                        WHERE participant_id=:participant_id AND event_id=:event_id";
         $checkStmt = $this->conn->prepare($checkQuery);
         $checkStmt->bindParam(":participant_id", $this->participant_id);
@@ -105,7 +105,7 @@ class Participant extends Account {
         }
 
         // Register for event
-        $query = "INSERT INTO inscrit 
+        $query = "INSERT INTO registered 
                   SET participant_id=:participant_id, event_id=:event_id";
 
         $stmt = $this->conn->prepare($query);
@@ -114,7 +114,7 @@ class Participant extends Account {
 
         if($stmt->execute()) {
             // Update registered count
-            $updateQuery = "UPDATE evenements 
+            $updateQuery = "UPDATE events 
                            SET registered_count = registered_count + 1 
                            WHERE event_id = :event_id";
             $updateStmt = $this->conn->prepare($updateQuery);
@@ -130,9 +130,9 @@ class Participant extends Account {
     // Get events (all public events)
     public function getEvents() {
         $query = "SELECT e.*, c.nom as club_name, a.nom as creator_name
-                  FROM evenements e
+                  FROM events e
                   INNER JOIN clubs c ON e.club_id = c.club_id
-                  INNER JOIN organisateurs o ON e.created_by = o.organisateur_id
+                  INNER JOIN organizers o ON e.created_by = o.organizer_id
                   INNER JOIN participants p ON o.participant_id = p.participant_id
                   INNER JOIN accounts a ON p.account_id = a.id
                   ORDER BY e.date_event ASC";
@@ -146,8 +146,8 @@ class Participant extends Account {
     // Get my registered events
     public function getMyEvents() {
         $query = "SELECT e.*, c.nom as club_name
-                  FROM evenements e
-                  INNER JOIN inscrit i ON e.event_id = i.event_id
+                  FROM events e
+                  INNER JOIN registered i ON e.event_id = i.event_id
                   INNER JOIN clubs c ON e.club_id = c.club_id
                   WHERE i.participant_id = :participant_id
                   ORDER BY e.date_event ASC";
@@ -162,9 +162,9 @@ class Participant extends Account {
     // Get clubs assigned to this participant (if organizer)
     public function getMyClubs() {
         $query = "SELECT c.*, COUNT(e.event_id) as event_count
-                  FROM organisateurs o
+                  FROM organizers o
                   INNER JOIN clubs c ON o.club_id = c.club_id
-                  LEFT JOIN evenements e ON c.club_id = e.club_id
+                  LEFT JOIN events e ON c.club_id = e.club_id
                   WHERE o.participant_id = :participant_id
                   GROUP BY c.club_id";
 
