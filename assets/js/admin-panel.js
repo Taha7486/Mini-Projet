@@ -186,3 +186,80 @@ async function changeUserRole(accountId, currentRole) {
         alert('An error occurred. Please try again.');
     }
 }
+
+// Create admin
+document.getElementById('addAdminForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const submitBtn = document.getElementById('addAdminSubmit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating...';
+
+    const formData = new FormData(form);
+    const payload = {
+        action: 'create_admin',
+        nom: formData.get('nom'),
+        email: formData.get('email'),
+        password: formData.get('password'),
+        student_id: formData.get('student_id') || null,
+        year: formData.get('year') || null,
+        department: formData.get('department') || null,
+        phone_number: formData.get('phone_number') || null
+    };
+
+    try {
+        const response = await fetch('api/admin.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (data.success) {
+            alert('Admin created successfully!');
+            form.reset();
+            // Optionally switch to Users tab to reflect changes after reload
+            location.reload();
+        } else {
+            alert(data.message || 'Failed to create admin');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('An error occurred. Please try again.');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Admin';
+    }
+});
+
+// Delete user
+async function deleteUser(accountId, userName) {
+    const confirmMsg = `Are you sure you want to delete user "${userName}"? This action cannot be undone.`;
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('api/admin.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'delete_user',
+                account_id: accountId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('User deleted successfully!');
+            location.reload();
+        } else {
+            alert(data.message || 'Failed to delete user');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+}

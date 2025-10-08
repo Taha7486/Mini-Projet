@@ -62,6 +62,9 @@ $allClubs = $admin->getAllClubs();
             <button onclick="showTab('users')" id="tab-users" class="flex-1 px-4 py-2 rounded-lg hover:bg-gray-100">
                 <i class="fas fa-user mr-2"></i>Users (<?= count($allUsers) ?>)
             </button>
+            <button onclick="showTab('add-admin')" id="tab-add-admin" class="flex-1 px-4 py-2 rounded-lg hover:bg-gray-100">
+                <i class="fas fa-user-shield mr-2"></i>Add Admin
+            </button>
         </div>
     </div>
 
@@ -215,17 +218,32 @@ $allClubs = $admin->getAllClubs();
                                         <?= ucfirst($user['role']) ?>
                                     </span>
                                 </td>
-                                <td class="px-4 py-3"><?= htmlspecialchars($user['student_id']) ?></td>
-                                <td class="px-4 py-3"><?= htmlspecialchars($user['department']) ?></td>
-                                <td class="px-4 py-3"><?= $user['year'] === 'graduate' ? 'Graduate' : $user['year'] . ' Year' ?></td>
+                                <td class="px-4 py-3"><?= htmlspecialchars($user['student_id'] ?? '-') ?></td>
+                                <td class="px-4 py-3"><?= htmlspecialchars($user['department'] ?? '-') ?></td>
+                                <td class="px-4 py-3">
+                                    <?php if (!empty($user['year'])): ?>
+                                        <?= $user['year'] === 'graduate' ? 'Graduate' : $user['year'] . ' Year' ?>
+                                    <?php else: ?>
+                                        -
+                                    <?php endif; ?>
+                                </td>
                                 <td class="px-4 py-3"><?= date('M d, Y', strtotime($user['created_at'])) ?></td>
                                 <td class="px-4 py-3">
-                                    <?php if ($user['role'] !== 'admin'): ?>
-                                    <button onclick="changeUserRole(<?= $user['account_id'] ?>, '<?= $user['role'] ?>')" 
-                                            class="px-3 py-1 border rounded hover:bg-gray-50 text-sm">
-                                        <i class="fas fa-user-cog mr-1"></i>Change Role
-                                    </button>
-                                    <?php endif; ?>
+                                    <div class="flex gap-2">
+                                        <?php if ($user['role'] !== 'admin'): ?>
+                                        <button onclick="changeUserRole(<?= $user['account_id'] ?>, '<?= $user['role'] ?>')" 
+                                                class="px-3 py-1 border rounded hover:bg-gray-50 text-sm">
+                                            <i class="fas fa-user-cog mr-1"></i>Change Role
+                                        </button>
+                                        <?php endif; ?>
+                                        
+                                        <?php if ($user['account_id'] != $_SESSION['user_id']): ?>
+                                        <button onclick="deleteUser(<?= $user['account_id'] ?>, '<?= htmlspecialchars($user['nom']) ?>')" 
+                                                class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                                            <i class="fas fa-trash mr-1"></i>Delete
+                                        </button>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -234,6 +252,36 @@ $allClubs = $admin->getAllClubs();
                 </div>
             </div>
         </div>
+        
+        <!-- Add Admin Tab -->
+        <div id="content-add-admin" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Create Admin</h2>
+
+                <form id="addAdminForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Full Name *</label>
+                        <input type="text" name="nom" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-medium mb-1">Email *</label>
+                        <input type="email" name="email" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-medium mb-1">Password *</label>
+                        <input type="password" name="password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                    </div>
+
+                    <div class="md:col-span-2 flex gap-3 pt-2">
+                        <button type="reset" class="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">Reset</button>
+                        <button id="addAdminSubmit" type="submit" class="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">Create Admin</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
     </main>
 
     <!-- Club Modal -->
