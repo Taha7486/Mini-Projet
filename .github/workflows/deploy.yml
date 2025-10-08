@@ -1,0 +1,32 @@
+name: 🚀 Deploy to InfinityFree 
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ftp-deploy:
+    name: 📤 Upload via FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧩 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy files to InfinityFree
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ftpupload.net             
+          username: if0_40123155            
+          password: OLEkUH5vYNKDT0z     
+          port: 21
+          local-dir: ./                      
+          server-dir: /htdocs/              
+          protocol: ftp
+          exclude: |                        
+            **/.git*
+            **/.github*
+            **/node_modules/**
+            **/*.md
+            config/**                        
