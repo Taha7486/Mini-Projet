@@ -65,15 +65,28 @@ if(isLoggedIn()) {
                             <option value="2">2nd Year</option>
                             <option value="3">3rd Year</option>
                             <option value="4">4th Year</option>
+                            <option value="5">5th Year</option>
                             <option value="graduate">Graduate</option>
                         </select>
                     </div>
 
-                    <div>
+                    <div id="departmentWrapper">
                         <label for="department" class="block text-sm font-medium mb-1">Department *</label>
                         <input type="text" id="department" name="department" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="Computer Science">
+                               placeholder="Department">
+                    </div>
+
+                    <div id="filiereWrapper" class="hidden">
+                        <label for="filiere" class="block text-sm font-medium mb-1">Filière *</label>
+                        <select id="filiere" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                            <option value="">Choose filière</option>
+                            <option value="GI">GI</option>
+                            <option value="SCM">SCM</option>
+                            <option value="BDIA">BDIA</option>
+                            <option value="GM">GM</option>
+                            <option value="GSTR">GSTR</option>
+                        </select>
                     </div>
 
                     <div>
@@ -151,6 +164,36 @@ if(isLoggedIn()) {
         const errorMessage = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
 
+        const yearSelect = document.getElementById('year');
+        const departmentWrapper = document.getElementById('departmentWrapper');
+        const departmentInput = document.getElementById('department');
+        const filiereWrapper = document.getElementById('filiereWrapper');
+        const filiereSelect = document.getElementById('filiere');
+
+        function updateFiliereVisibility() {
+            const y = yearSelect.value;
+            const needsFiliere = y === '3' || y === '4' || y === '5';
+            const needsDepartment = y === 'graduate';
+            
+            if (needsFiliere) {
+                filiereWrapper.classList.remove('hidden');
+                departmentWrapper.classList.add('hidden');
+                departmentInput.removeAttribute('required');
+            } else if (needsDepartment) {
+                filiereWrapper.classList.add('hidden');
+                departmentWrapper.classList.remove('hidden');
+                departmentInput.setAttribute('required', 'required');
+            } else {
+                // Years 1-2: hide both department and filiere
+                filiereWrapper.classList.add('hidden');
+                departmentWrapper.classList.add('hidden');
+                departmentInput.removeAttribute('required');
+            }
+        }
+
+        yearSelect.addEventListener('change', updateFiliereVisibility);
+        updateFiliereVisibility();
+
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -174,13 +217,23 @@ if(isLoggedIn()) {
             submitBtn.textContent = 'Creating account...';
             errorMessage.classList.add('hidden');
 
+            // For years 3-5, send filiere value as department
+            // For years 1-2, send empty department
+            // For graduate, send department input
+            let effectiveDepartment = '';
+            if (yearSelect.value === '3' || yearSelect.value === '4' || yearSelect.value === '5') {
+                effectiveDepartment = filiereSelect.value || '';
+            } else if (yearSelect.value === 'graduate') {
+                effectiveDepartment = formData.get('department') || '';
+            }
+
             const payload = {
                 action: 'signup',
                 nom: formData.get('nom'),
                 email: formData.get('email'),
                 student_id: formData.get('student_id'),
                 year: formData.get('year'),
-                department: formData.get('department'),
+                department: effectiveDepartment,
                 phone_number: formData.get('phone_number'),
                 password: formData.get('password')
             };
