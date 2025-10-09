@@ -7,6 +7,11 @@ try {
     require_once '../config/database.php';
     require_once '../classes/Event.php';
     require_once '../classes/Organizer.php';
+    require_once '../classes/Participant.php';
+    // Ensure Composer libraries (PHPMailer, Dompdf, etc.) are autoloaded
+    if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+        require_once __DIR__ . '/../vendor/autoload.php';
+    }
     require_once '../includes/session.php';
 
     $database = new Database();
@@ -45,6 +50,15 @@ try {
         case 'get_participants':
             handleGetParticipants($db, $input);
             break;
+        case 'register':
+            handleRegisterForEvent($db, $input);
+            break;
+        case 'send_emails':
+            handleSendEmails($db, $input);
+            break;
+        case 'send_attestations':
+            handleSendAttestations($db, $input);
+            break;
         default:
             echo json_encode(['success' => false, 'message' => 'Invalid action']);
     }
@@ -53,9 +67,14 @@ try {
 }
 
 function handleCreateEvent($db, $input) {
-    // Check if user is logged in and is organizer or admin
+    // Check if user is logged in
     if (!isLoggedIn()) {
         throw new Exception('You must be logged in');
+    }
+
+    // Disallow admins from creating events
+    if (isAdmin()) {
+        throw new Exception('Admins cannot create events');
     }
 
     $title = trim($input['title'] ?? '');
@@ -80,7 +99,7 @@ function handleCreateEvent($db, $input) {
     }
 
     // Check if organizer manages this club
-    if (!isAdmin() && !$organizer->isOrganizerForClub($organizer->participant_id, $club_id)) {
+    if (!$organizer->isOrganizerForClub($organizer->participant_id, $club_id)) {
         throw new Exception('You are not authorized to create events for this club');
     }
 
@@ -139,7 +158,8 @@ function handleUpdateEvent($db, $input) {
         'image_url' => $image_url
     ];
 
-    if($organizer->modifyEvent($event_id, $eventData)) {
+    $allowAnyOwner = isAdmin();
+    if($organizer->modifyEvent($event_id, $eventData, $allowAnyOwner)) {
         echo json_encode(['success' => true, 'message' => 'Event updated successfully']);
     } else {
         throw new Exception('Failed to update event or you are not authorized');
@@ -198,6 +218,244 @@ function handleGetParticipants($db, $input) {
     } else {
         throw new Exception('Failed to load participants or you are not authorized');
     }
+}
+
+function handleRegisterForEvent($db, $input) {
+    // Must be logged in and not an admin
+    if (!isLoggedIn()) {
+        throw new Exception('You must be logged in');
+    }
+    if (isAdmin()) {
+        throw new Exception('Admins cannot register for events');
+    }
+
+    $event_id = intval($input['event_id'] ?? 0);
+    if ($event_id <= 0) {
+        throw new Exception('Event ID is required');
+    }
+
+    $participant = new Participant($db);
+    $participant->id = $_SESSION['user_id'];
+    if (!$participant->getProfile()) {
+        throw new Exception('Participant profile not found');
+    }
+
+    if ($participant->registerForEvent($event_id)) {
+        echo json_encode(['success' => true, 'message' => 'Registered successfully']);
+    } else {
+        throw new Exception('Already registered or registration failed');
+    }
+}
+
+function handleSendAttestations($db, $input) {
+    // Only organizers who own the event can send attestations; admins are not allowed
+    if (!isLoggedIn()) {
+        throw new Exception('You must be logged in');
+    }
+    if (isAdmin()) {
+        throw new Exception('Admins are not allowed to send attestations');
+    }
+
+    $event_id = intval($input['event_id'] ?? 0);
+    $participant_ids = $input['participant_ids'] ?? null; // required selection by organizer
+
+    if ($event_id <= 0) {
+        throw new Exception('Event ID is required');
+    }
+    if (!is_array($participant_ids) || count($participant_ids) === 0) {
+        throw new Exception('Please select at least one participant');
+    }
+
+    require_once '../classes/Organizer.php';
+    require_once '../services/Mailer.php';
+    require_once '../services/AttestationPdfService.php';
+
+    $organizer = new Organizer($db);
+    $organizer->id = $_SESSION['user_id'];
+    if (!$organizer->getProfile()) {
+        throw new Exception('Organizer profile not found');
+    }
+
+    // Ensure the organizer owns the event and fetch details
+    $checkQuery = "SELECT event_id, title, date_event, time_event, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
+    $checkStmt = $db->prepare($checkQuery);
+    $checkStmt->bindParam(":event_id", $event_id);
+    $checkStmt->bindParam(":created_by", $organizer->organizer_id);
+    $checkStmt->execute();
+    $event = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$event) {
+        throw new Exception('You are not authorized to send attestations for this event');
+    }
+
+    // Fetch selected participants (and their registration IDs)
+    $params = [":event_id" => $event_id];
+    $placeholders = [];
+    foreach ($participant_ids as $idx => $pid) {
+        $ph = ":pid_" . $idx;
+        $placeholders[] = $ph;
+        $params[$ph] = (int)$pid;
+    }
+    $q = "SELECT i.registration_id, p.participant_id, a.nom, a.email
+          FROM registered i
+          INNER JOIN participants p ON i.participant_id = p.participant_id
+          INNER JOIN accounts a ON p.account_id = a.id
+          WHERE i.event_id = :event_id AND p.participant_id IN (" . implode(",", $placeholders) . ")";
+    $stmt = $db->prepare($q);
+    foreach ($params as $k => $v) { $stmt->bindValue($k, $v); }
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!$rows || count($rows) === 0) {
+        echo json_encode(['success' => true, 'sent' => 0, 'results' => []]);
+        return;
+    }
+
+    $pdfService = new AttestationPdfService();
+    $mailer = new Mailer();
+
+    $sent = 0;
+    $results = [];
+
+    foreach ($rows as $row) {
+        $registrationId = (int)$row['registration_id'];
+        $participant = ['nom' => $row['nom'], 'email' => $row['email']];
+
+        // Generate or reuse existing attestation
+        $pdfPath = null;
+        if (class_exists('Dompdf\\Dompdf')) {
+            $pdfPath = $pdfService->generateForRegistration($db, $registrationId, $event, $participant, $organizer->nom);
+        }
+
+        // Upsert into attestations table if pdf exists
+        if ($pdfPath) {
+            $upsert = $db->prepare(
+                "INSERT INTO attestations (registration_id, pdf_path) VALUES (:rid, :path)
+                 ON DUPLICATE KEY UPDATE pdf_path = VALUES(pdf_path), generated_at = CURRENT_TIMESTAMP"
+            );
+            $upsert->bindValue(":rid", $registrationId, PDO::PARAM_INT);
+            $upsert->bindValue(":path", $pdfPath, PDO::PARAM_STR);
+            $upsert->execute();
+        }
+
+        // Build email
+        $toEmail = $row['email'];
+        $toName = $row['nom'];
+        $subject = 'Your Attendance Certificate - ' . $event['title'];
+        $htmlBody = '<p>Dear ' . htmlspecialchars($toName) . ',</p>' .
+                    '<p>Please find attached your attendance certificate for <strong>' . htmlspecialchars($event['title']) . '</strong>.</p>' .
+                    '<p>Event details: ' . htmlspecialchars($event['date_event']) . ' at ' . htmlspecialchars($event['time_event']) . ' - ' . htmlspecialchars($event['location']) . '.</p>' .
+                    '<p>Best regards,<br/>' . htmlspecialchars($organizer->nom) . '</p>';
+
+        $attachments = [];
+        if ($pdfPath && file_exists($pdfPath)) { $attachments[] = $pdfPath; }
+
+        $ok = $mailer->sendEmail($toEmail, $toName, $subject, $htmlBody, $attachments);
+        $results[] = [
+            'participant_id' => (int)$row['participant_id'],
+            'email' => $toEmail,
+            'sent' => (bool)$ok,
+            'pdf' => $pdfPath ?: null,
+            'error' => $ok ? null : (method_exists($mailer, 'getLastError') ? $mailer->getLastError() : 'Unknown error')
+        ];
+        if ($ok) { $sent++; }
+    }
+
+    echo json_encode(['success' => true, 'sent' => $sent, 'total' => count($rows), 'results' => $results]);
+}
+
+function handleSendEmails($db, $input) {
+    // Only organizers who own the event can send emails; admins are not allowed
+    if (!isLoggedIn()) {
+        throw new Exception('You must be logged in');
+    }
+    if (isAdmin()) {
+        throw new Exception('Admins are not allowed to send emails');
+    }
+
+    $event_id = intval($input['event_id'] ?? 0);
+    $participant_ids = $input['participant_ids'] ?? null; // null => all registered
+
+    if ($event_id <= 0) {
+        throw new Exception('Event ID is required');
+    }
+
+    require_once '../classes/Organizer.php';
+    require_once '../services/Mailer.php';
+
+    $organizer = new Organizer($db);
+    $organizer->id = $_SESSION['user_id'];
+    if (!$organizer->getProfile()) {
+        throw new Exception('Organizer profile not found');
+    }
+
+    // Ensure the organizer owns the event
+    $checkQuery = "SELECT event_id, title, date_event, time_event, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
+    $checkStmt = $db->prepare($checkQuery);
+    $checkStmt->bindParam(":event_id", $event_id);
+    $checkStmt->bindParam(":created_by", $organizer->organizer_id);
+    $checkStmt->execute();
+    $event = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$event) {
+        throw new Exception('You are not authorized to send emails for this event');
+    }
+
+    // Build recipient list
+    $params = [":event_id" => $event_id];
+    $filter = "";
+    if (is_array($participant_ids) && count($participant_ids) > 0) {
+        // restrict to provided participant ids
+        $placeholders = [];
+        foreach ($participant_ids as $idx => $pid) {
+            $ph = ":pid_" . $idx;
+            $placeholders[] = $ph;
+            $params[$ph] = (int)$pid;
+        }
+        $filter = " AND i.participant_id IN (" . implode(",", $placeholders) . ")";
+    }
+
+    // Currently use confirmed as a proxy for attendance
+    $q = "SELECT i.registration_id, a.nom, a.email, p.participant_id
+          FROM registered i
+          INNER JOIN participants p ON i.participant_id = p.participant_id
+          INNER JOIN accounts a ON p.account_id = a.id
+          WHERE i.event_id = :event_id AND i.confirmed = 1" . $filter;
+    $stmt = $db->prepare($q);
+    foreach ($params as $k => $v) {
+        $stmt->bindValue($k, $v);
+    }
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!$rows || count($rows) === 0) {
+        echo json_encode(['success' => true, 'sent' => 0, 'results' => []]);
+        return;
+    }
+
+    $mailer = new Mailer();
+
+    $sent = 0;
+    $results = [];
+    foreach ($rows as $row) {
+        $toEmail = $row['email'];
+        $toName = $row['nom'];
+        $subject = 'Information about your event registration';
+        // Simple template for now; Attestation attachment to be added later
+        $htmlBody = '<p>Dear ' . htmlspecialchars($toName) . ',</p>' .
+                    '<p>Thank you for attending <strong>' . htmlspecialchars($event['title']) . '</strong> on ' .
+                    htmlspecialchars($event['date_event']) . ' at ' . htmlspecialchars($event['time_event']) . ' (' . htmlspecialchars($event['location']) . ').</p>' .
+                    '<p>Your attendance has been recorded.</p>' .
+                    '<p>Best regards,<br/>Campus Events Team</p>';
+
+        $ok = $mailer->sendEmail($toEmail, $toName, $subject, $htmlBody, []);
+        $results[] = [
+            'participant_id' => (int)$row['participant_id'],
+            'email' => $toEmail,
+            'sent' => (bool)$ok
+        ];
+        if ($ok) { $sent++; }
+    }
+
+    echo json_encode(['success' => true, 'sent' => $sent, 'total' => count($rows), 'results' => $results]);
 }
 ?>
 

@@ -1,128 +1,113 @@
-# Campus Events Management System - PHP Version
+# Campus Events Management System (PHP)
 
-This is a PHP/MySQL implementation of the Campus Events Management System.
+PHP/MySQL web app for managing campus events with participants, organizers, and admins. Includes email verification, event management, participant communications, and PDF attendance attestations.
 
-## Setup Instructions
+## Project Structure
 
-### 1. Database Setup
-1. Open PHPMyAdmin
-2. Create a new database named `campus_events`
-3. Import the SQL schema from `/php-version/database/schema.sql`
+```
+Mini-Projet/
+├── api/                    # AJAX/JSON endpoints
+│   ├── admin.php
+│   ├── auth.php
+│   └── events.php
+├── assets/
+│   └── js/
+│       ├── admin-panel.js
+│       └── organizer-dashboard.js
+├── classes/                # Domain models (PDO)
+│   ├── Account.php
+│   ├── Admin.php
+│   ├── Club.php
+│   ├── Event.php
+│   ├── Organizer.php
+│   └── Participant.php
+├── config/
+│   ├── database.php        # DB connection (PDO)
+│   └── mail.php            # SMTP configuration
+├── database/
+│   └── schema.sql          # Full schema (accounts, participants, events, registered, attestations, pending_signups,...)
+├── includes/
+│   └── session.php         # Session helpers and role guards
+├── services/
+│   ├── AttestationPdfService.php  # Dompdf-based certificate generator
+│   ├── EmailVerification.php      # VerifyEmail + send verification links
+│   └── Mailer.php                 # PHPMailer wrapper
+├── vendor/                 # Composer dependencies (autoloaded)
+├── admin-panel.php
+├── index.php
+├── login.php
+├── organizer-dashboard.php
+├── profile.php
+└── signup.php
+```
 
-### 2. Configuration
-- Edit `/php-version/config/database.php` if needed (default: localhost, root, no password)
+## Setup
 
-### 3. Default Admin Account
+1) Database
+- Create MySQL DB `campus_events` (e.g., via phpMyAdmin).
+- Import `database/schema.sql`.
+
+2) PHP Dependencies
+```bash
+composer install
+composer require phpmailer/phpmailer dompdf/dompdf verifyemail/verifyemail
+```
+
+3) Config
+- `config/database.php`: adjust host/name/user/pass.
+- `config/mail.php`: set SMTP host, port, security, username/password, from_email/from_name.
+
+4) Default Admin
 - Email: `admin@campus.edu`
 - Password: `Admin123!`
 
-## File Structure
+## How It Works (Key Flows)
 
-```
-/php-version/
-├── classes/           # PHP Classes (OOP)
-│   ├── Account.php
-│   ├── Participant.php
-│   ├── Admin.php
-│   ├── Organizer.php
-│   ├── Club.php
-│   └── Event.php
-├── config/
-│   └── database.php   # Database connection
-├── database/
-│   └── schema.sql     # MySQL schema
-├── includes/
-│   ├── session.php    # Session management
-│   └── header.php     # Common header
-├── api/               # AJAX endpoints
-│   ├── auth.php
-│   ├── events.php
-│   ├── clubs.php
-│   └── participants.php
-├── assets/
-│   ├── css/
-│   └── js/
-├── index.php          # Public events page
-├── login.php
-├── signup.php
-├── profile.php
-├── organizer-dashboard.php
-└── admin-panel.php
-```
+- Authentication and Roles
+  - Accounts live in `accounts`; participants in `participants`; admins in `admins`.
+  - `includes/session.php` manages sessions and role checks.
 
-## User Roles
+- Signup with Email Verification
+  - Frontend posts `action=request_signup` to `api/auth.php`.
+  - Email format/SMTP verification via `VerifyEmail` then store in `pending_signups` with token.
+  - Verification email is sent using `services/Mailer.php`.
+  - Clicking the link hits `api/auth.php?action=verify_signup&token=...` which creates the real `accounts` and `participants` rows, then deletes the pending record.
+  - Year logic: Years 1–2 require no department/filière; Years 3–5 require filière (mapped to `department`); Graduate requires department.
 
-### Person (Base)
-- Create account (with email validation & CAPTCHA)
-- Login
-- View events
-- Register for events (requires login)
+- Organizer Event Management
+  - Organizers create/update/delete events they own; ownership enforced via `events.created_by`.
+  - Participants modal shows registrants; organizers can select attendees and send attestations.
 
-### User (Participant)
-- All Person capabilities
-- Request to become organizer
-- View registered events
-
-### Organizer
-- All User capabilities
-- Create/Modify/Delete events
-- View event participants
-- Send emails to participants
-- Generate participation certificates
-
-### Admin
-- Approve/Reject organizer requests
-- Manage clubs (create/delete)
-- Manage user accounts
-- Create new admins
+- Emailing Attestations
+  - UI selects participants and posts `action=send_attestations` to `api/events.php`.
+  - API validates organizer ownership, generates a PDF per selected participant via Dompdf, stores paths in `attestations`, and emails with PHPMailer.
 
 ## Features
 
-1. **Authentication System**
-   - Secure login with password hashing (bcrypt)
-   - Session management
-   - Role-based access control
+- Accounts and Roles
+  - Login/logout, sessions, role checks (participant, organizer, admin).
+  - Email verification at signup using `VerifyEmail` and tokenized links.
 
-2. **Event Management**
-   - Public event listing
-   - Event registration (logged-in users)
-   - Event filtering by club
-   - Event details view
+- Events
+  - Create, edit, delete events (organizer-owned).
+  - Public listing, registration, participant counts.
 
-3. **Organizer Features**
-   - Create events for assigned clubs
-   - Edit/Delete own events
-   - View participant list
-   - Email participants
-   - Generate certificates
+- Participants Management
+  - Organizer-only participant list per event.
+  - Select and email attendees with attached PDF attestations.
 
-4. **Admin Features**
-   - Club management
-   - Organizer request approval
-   - User management
-   - Admin creation
+- Certificates (Attestations)
+  - Dompdf-based, dark-blue theme, centered layout.
+  - Stored under `storage/attestations/{event_id}/...pdf` and recorded in DB.
 
-## Technology Stack
+## Roadmap / To Add
 
-- **Backend**: PHP 7.4+ (OOP with Classes)
-- **Database**: MySQL 5.7+ / MariaDB
-- **Frontend**: HTML5, Tailwind CSS, Vanilla JavaScript
-- **AJAX**: Fetch API for dynamic interactions
+- Admin dashboards for reports and metrics.
+- ReCaptcha v2/3 integration (replace placeholder checkbox).
+- Unit/integration tests.
 
-## Security Features
+## Development Notes
 
-- Password hashing with bcrypt
-- SQL injection prevention (PDO prepared statements)
-- XSS protection
-- CSRF tokens (to be implemented)
-- Session security
-- Input validation
-
-## Next Steps
-
-To complete the implementation, create:
-1. Main HTML pages (index, login, signup, etc.)
-2. API endpoints for AJAX calls
-3. JavaScript for dynamic interactions
-4. Email integration (optional)
-5. PDF generation for certificates (optional)
+- Autoload: Composer’s `vendor/autoload.php` is included by APIs.
+- Security: Prepared statements everywhere; passwords hashed with bcrypt.
+- Styling: Tailwind CDN for simple pages; minimal JS with Fetch API.
