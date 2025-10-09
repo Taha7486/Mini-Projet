@@ -85,10 +85,11 @@ $clubs = $club->getAll();
     <main class="container mx-auto px-4 py-8">
         <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <?php foreach ($events as $event): ?>
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow event-card" 
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow event-card cursor-pointer" 
                      data-club="<?= $event['club_id'] ?>"
                      data-title="<?= strtolower($event['title']) ?>"
-                     data-description="<?= strtolower($event['description']) ?>">
+                     data-description="<?= strtolower($event['description']) ?>"
+                     onclick="viewEventDetails(<?= $event['event_id'] ?>)">
                     <div class="relative h-48 bg-gray-200">
                         <?php if ($event['image_url']): ?>
                             <img src="<?= htmlspecialchars($event['image_url']) ?>" 
@@ -98,6 +99,11 @@ $clubs = $club->getAll();
                         <span class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
                             <?= htmlspecialchars($event['club_name']) ?>
                         </span>
+                        <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
+                            <div class="opacity-0 hover:opacity-100 transition-opacity duration-200">
+                                <i class="fas fa-eye text-white text-2xl"></i>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="p-4">
@@ -122,7 +128,7 @@ $clubs = $club->getAll();
                         <?php 
                         $spotsLeft = $event['capacity'] - $event['registered_count'];
                         ?>
-                        <button onclick="registerForEvent(<?= $event['event_id'] ?>)" 
+                        <button onclick="event.stopPropagation(); registerForEvent(<?= $event['event_id'] ?>)" 
                                 class="w-full py-2 bg-black text-white rounded-lg hover:bg-gray-800 <?= $spotsLeft == 0 ? 'opacity-50 cursor-not-allowed' : '' ?>"
                                 <?= $spotsLeft == 0 ? 'disabled' : '' ?>>
                             <?= $spotsLeft == 0 ? 'Event Full' : 'Register Now' ?>
@@ -171,6 +177,11 @@ $clubs = $club->getAll();
 
         searchInput.addEventListener('input', filterEvents);
         clubFilter.addEventListener('change', filterEvents);
+
+        // View event details
+        function viewEventDetails(eventId) {
+            window.location.href = `event-details.php?id=${eventId}`;
+        }
 
         // Register for event
         function registerForEvent(eventId) {

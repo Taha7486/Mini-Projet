@@ -77,10 +77,10 @@ if(isLoggedIn()) {
                                placeholder="Department">
                     </div>
 
-                    <div id="filiereWrapper" class="hidden">
-                        <label for="filiere" class="block text-sm font-medium mb-1">Filière *</label>
-                        <select id="filiere" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
-                            <option value="">Choose filière</option>
+                    <div id="majorWrapper" class="hidden">
+                        <label for="major" class="block text-sm font-medium mb-1">Major *</label>
+                        <select id="major" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                            <option value="">Seleclt your major</option>
                             <option value="GI">GI</option>
                             <option value="SCM">SCM</option>
                             <option value="BDIA">BDIA</option>
@@ -167,32 +167,32 @@ if(isLoggedIn()) {
         const yearSelect = document.getElementById('year');
         const departmentWrapper = document.getElementById('departmentWrapper');
         const departmentInput = document.getElementById('department');
-        const filiereWrapper = document.getElementById('filiereWrapper');
-        const filiereSelect = document.getElementById('filiere');
+        const majorWrapper = document.getElementById('majorWrapper');
+        const majorSelect = document.getElementById('major');
 
-        function updateFiliereVisibility() {
+        function updateMajorVisibility() {
             const y = yearSelect.value;
-            const needsFiliere = y === '3' || y === '4' || y === '5';
+            const needsMajor = y === '3' || y === '4' || y === '5';
             const needsDepartment = y === 'graduate';
             
-            if (needsFiliere) {
-                filiereWrapper.classList.remove('hidden');
+            if (needsMajor) {
+                majorWrapper.classList.remove('hidden');
                 departmentWrapper.classList.add('hidden');
                 departmentInput.removeAttribute('required');
             } else if (needsDepartment) {
-                filiereWrapper.classList.add('hidden');
+                majorWrapper.classList.add('hidden');
                 departmentWrapper.classList.remove('hidden');
                 departmentInput.setAttribute('required', 'required');
             } else {
-                // Years 1-2: hide both department and filiere
-                filiereWrapper.classList.add('hidden');
+                // Years 1-2: hide both department and major
+                majorWrapper.classList.add('hidden');
                 departmentWrapper.classList.add('hidden');
                 departmentInput.removeAttribute('required');
             }
         }
 
-        yearSelect.addEventListener('change', updateFiliereVisibility);
-        updateFiliereVisibility();
+        yearSelect.addEventListener('change', updateMajorVisibility);
+        updateMajorVisibility();
 
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -217,12 +217,12 @@ if(isLoggedIn()) {
             submitBtn.textContent = 'Creating account...';
             errorMessage.classList.add('hidden');
 
-            // For years 3-5, send filiere value as department
+            // For years 3-5, send major value as department
             // For years 1-2, send empty department
             // For graduate, send department input
             let effectiveDepartment = '';
             if (yearSelect.value === '3' || yearSelect.value === '4' || yearSelect.value === '5') {
-                effectiveDepartment = filiereSelect.value || '';
+                effectiveDepartment = majorSelect.value || '';
             } else if (yearSelect.value === 'graduate') {
                 effectiveDepartment = formData.get('department') || '';
             }
