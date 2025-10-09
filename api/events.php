@@ -59,6 +59,9 @@ try {
         case 'send_attestations':
             handleSendAttestations($db, $input);
             break;
+        case 'send_custom_email':
+            handleSendCustomEmail($db, $input);
+            break;
         default:
             echo json_encode(['success' => false, 'message' => 'Invalid action']);
     }
@@ -453,6 +456,148 @@ function handleSendEmails($db, $input) {
             'sent' => (bool)$ok
         ];
         if ($ok) { $sent++; }
+    }
+
+    echo json_encode(['success' => true, 'sent' => $sent, 'total' => count($rows), 'results' => $results]);
+}
+
+function handleSendCustomEmail($db, $input) {
+    // Only organizers who own the event can send custom emails; admins are not allowed
+    if (!isLoggedIn()) {
+        throw new Exception('You must be logged in');
+    }
+    if (isAdmin()) {
+        throw new Exception('Admins are not allowed to send custom emails');
+    }
+
+    $event_id = intval($input['event_id'] ?? 0);
+    $participant_ids = $input['participant_ids'] ?? null; // null => all registered
+    $subject = trim($input['subject'] ?? '');
+    $message = trim($input['message'] ?? '');
+    $attachments = $input['attachments'] ?? []; // Array of file paths
+
+    if ($event_id <= 0) {
+        throw new Exception('Event ID is required');
+    }
+    if (empty($subject)) {
+        throw new Exception('Subject is required');
+    }
+    if (empty($message)) {
+        throw new Exception('Message is required');
+    }
+
+    require_once '../classes/Organizer.php';
+    require_once '../services/Mailer.php';
+
+    $organizer = new Organizer($db);
+    $organizer->id = $_SESSION['user_id'];
+    if (!$organizer->getProfile()) {
+        throw new Exception('Organizer profile not found');
+    }
+
+    // Ensure the organizer owns the event
+    $checkQuery = "SELECT event_id, title, date_event, time_event, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
+    $checkStmt = $db->prepare($checkQuery);
+    $checkStmt->bindParam(":event_id", $event_id);
+    $checkStmt->bindParam(":created_by", $organizer->organizer_id);
+    $checkStmt->execute();
+    $event = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$event) {
+        throw new Exception('You are not authorized to send emails for this event');
+    }
+
+    // Build recipient list
+    $params = [":event_id" => $event_id];
+    $filter = "";
+    if (is_array($participant_ids) && count($participant_ids) > 0) {
+        // restrict to provided participant ids
+        $placeholders = [];
+        foreach ($participant_ids as $idx => $pid) {
+            $ph = ":pid_" . $idx;
+            $placeholders[] = $ph;
+            $params[$ph] = (int)$pid;
+        }
+        $filter = " AND i.participant_id IN (" . implode(",", $placeholders) . ")";
+    }
+
+    // Get registered participants
+    $q = "SELECT i.registration_id, a.nom, a.email, p.participant_id
+          FROM registered i
+          INNER JOIN participants p ON i.participant_id = p.participant_id
+          INNER JOIN accounts a ON p.account_id = a.id
+          WHERE i.event_id = :event_id AND i.confirmed = 1" . $filter;
+    $stmt = $db->prepare($q);
+    foreach ($params as $k => $v) {
+        $stmt->bindValue($k, $v);
+    }
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!$rows || count($rows) === 0) {
+        echo json_encode(['success' => true, 'sent' => 0, 'results' => []]);
+        return;
+    }
+
+    $mailer = new Mailer();
+
+    $sent = 0;
+    $results = [];
+    foreach ($rows as $row) {
+        $toEmail = $row['email'];
+        $toName = $row['nom'];
+        
+        // Create personalized message
+        $personalizedMessage = str_replace(
+            ['{name}', '{event_title}', '{event_date}', '{event_time}', '{event_location}'],
+            [
+                htmlspecialchars($toName),
+                htmlspecialchars($event['title']),
+                htmlspecialchars($event['date_event']),
+                htmlspecialchars($event['time_event']),
+                htmlspecialchars($event['location'])
+            ],
+            $message
+        );
+
+        // Build HTML body
+        $htmlBody = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">';
+        $htmlBody .= '<h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">' . htmlspecialchars($subject) . '</h2>';
+        $htmlBody .= '<div style="line-height: 1.6; color: #555;">';
+        $htmlBody .= nl2br(htmlspecialchars($personalizedMessage));
+        $htmlBody .= '</div>';
+        $htmlBody .= '<hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">';
+        $htmlBody .= '<p style="font-size: 12px; color: #888;">';
+        $htmlBody .= 'This email was sent regarding the event: <strong>' . htmlspecialchars($event['title']) . '</strong><br>';
+        $htmlBody .= 'Best regards,<br>' . htmlspecialchars($organizer->nom ?? 'Event Organizer');
+        $htmlBody .= '</p></div>';
+
+        // Validate attachments
+        $validAttachments = [];
+        if (is_array($attachments)) {
+            foreach ($attachments as $attachment) {
+                if (is_string($attachment) && file_exists($attachment)) {
+                    $validAttachments[] = $attachment;
+                }
+            }
+        }
+
+        $ok = $mailer->sendEmail($toEmail, $toName, $subject, $htmlBody, $validAttachments);
+        $results[] = [
+            'participant_id' => (int)$row['participant_id'],
+            'email' => $toEmail,
+            'sent' => (bool)$ok,
+            'error' => $ok ? null : $mailer->getLastError()
+        ];
+        if ($ok) { $sent++; }
+    }
+
+    // Clean up uploaded files after sending
+    if (!empty($validAttachments)) {
+        foreach ($validAttachments as $filePath) {
+            if (file_exists($filePath) && strpos($filePath, '../storage/email_attachments/') === 0) {
+                unlink($filePath);
+            }
+        }
     }
 
     echo json_encode(['success' => true, 'sent' => $sent, 'total' => count($rows), 'results' => $results]);

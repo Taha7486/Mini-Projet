@@ -128,9 +128,17 @@ $allClubs = $club->getAll();
                                 <i class="fas fa-trash mr-1"></i>Delete
                             </button>
                         </div>
-                        <button onclick="viewParticipants(<?= $event['event_id'] ?>)" class="w-full px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                            <i class="fas fa-users mr-1"></i>View Participants (<?= $event['registered_count'] ?>)
-                        </button>
+                        <div class="space-y-2">
+                            <button onclick="viewParticipants(<?= $event['event_id'] ?>)" class="w-full px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                <i class="fas fa-users mr-1"></i>View Participants (<?= $event['registered_count'] ?>)
+                            </button>
+                            <button onclick="openAttestationsModal(<?= $event['event_id'] ?>, '<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>')" class="w-full px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200">
+                                <i class="fas fa-graduation-cap mr-1"></i>Send Attestations
+                            </button>
+                            <button onclick="openEmailModal(<?= $event['event_id'] ?>, '<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>')" class="w-full px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200">
+                                <i class="fas fa-envelope mr-1"></i>Send Email
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -226,6 +234,151 @@ $allClubs = $club->getAll();
                 <div id="participantsList" class="overflow-x-auto">
                     <!-- Participants will be loaded here -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attestations Modal -->
+    <div id="attestationsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-2xl font-semibold">Send Attestations</h2>
+                        <p class="text-gray-600" id="attestationsEventTitle">Event: Loading...</p>
+                        <p class="text-gray-600" id="attestationsCount">0 participants available</p>
+                    </div>
+                    <button onclick="closeAttestationsModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <label class="inline-flex items-center gap-2 text-sm">
+                            <input id="selectAllAttestations" type="checkbox" class="w-4 h-4 border rounded">
+                            <span>Select all</span>
+                        </label>
+                        <span id="selectedAttestationsCount" class="text-sm text-gray-600">0 selected</span>
+                    </div>
+                    <button id="sendAttestationsBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed">
+                        <i class="fas fa-certificate mr-2"></i>Send Attestations
+                    </button>
+                </div>
+
+                <div id="attestationsList" class="overflow-x-auto">
+                    <!-- Participants will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Email Modal -->
+    <div id="emailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-2xl font-semibold">Send Custom Email</h2>
+                        <p class="text-gray-600" id="emailEventTitle">Event: Loading...</p>
+                    </div>
+                    <button onclick="closeEmailModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <form id="emailForm" class="space-y-6">
+                    <input type="hidden" id="emailEventId" name="event_id">
+                    
+                    <!-- Recipients Selection -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Recipients</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="recipient_type" value="all" checked class="w-4 h-4">
+                                <span>All registered participants</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="recipient_type" value="selected" class="w-4 h-4">
+                                <span>Selected participants only</span>
+                            </label>
+                        </div>
+                        <div id="participantSelection" class="hidden mt-3 max-h-40 overflow-y-auto border rounded p-3">
+                            <!-- Participants will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Email Subject -->
+                    <div>
+                        <label for="emailSubject" class="block text-sm font-medium mb-2">Subject *</label>
+                        <input type="text" id="emailSubject" name="subject" required 
+                               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter email subject">
+                    </div>
+
+                    <!-- Email Message -->
+                    <div>
+                        <label for="emailMessage" class="block text-sm font-medium mb-2">Message *</label>
+                        <textarea id="emailMessage" name="message" required rows="8"
+                                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Enter your message here. You can use placeholders: {name}, {event_title}, {event_date}, {event_time}, {event_location}"></textarea>
+                        <div class="mt-2 text-sm text-gray-600">
+                            <p><strong>Available placeholders:</strong></p>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li><code>{name}</code> - Participant's name</li>
+                                <li><code>{event_title}</code> - Event title</li>
+                                <li><code>{event_date}</code> - Event date</li>
+                                <li><code>{event_time}</code> - Event time</li>
+                                <li><code>{event_location}</code> - Event location</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- File Attachments -->
+                    <div>
+                        <label for="emailAttachments" class="block text-sm font-medium mb-2">Attachments (Optional)</label>
+                        <input type="file" id="emailAttachments" name="attachments[]" multiple 
+                               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="mt-1 text-sm text-gray-500">You can select multiple files. Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB each)</p>
+                        
+                        <!-- File list display -->
+                        <div id="selectedFiles" class="mt-2 hidden">
+                            <p class="text-sm font-medium text-gray-700 mb-2">Selected files:</p>
+                            <div id="fileList" class="space-y-1"></div>
+                        </div>
+                        
+                        <!-- Upload progress -->
+                        <div id="uploadProgress" class="hidden mt-2">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                                <span id="progressText" class="text-sm text-gray-600">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Preview</label>
+                        <div id="emailPreview" class="border rounded-lg p-4 bg-gray-50 min-h-[100px]">
+                            <p class="text-gray-500 italic">Preview will appear here as you type...</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t">
+                        <button type="button" onclick="closeEmailModal()" 
+                                class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" id="sendEmailBtn" 
+                                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-paper-plane mr-2"></i>Send Email
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
