@@ -248,6 +248,110 @@ function closeAttestationsModal() {
     document.getElementById('attestationsModal').classList.add('hidden');
 }
 
+// Open email history modal
+async function openEmailHistoryModal(eventId, eventTitle) {
+    document.getElementById('emailHistoryEventTitle').textContent = `Event: ${eventTitle}`;
+    
+    try {
+        const response = await fetch('api/events.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'get_email_history',
+                event_id: eventId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const history = data.history || [];
+            displayEmailHistory(history);
+            document.getElementById('emailHistoryModal').classList.remove('hidden');
+        } else {
+            alert(data.message || 'Failed to load email history');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+}
+
+// Close email history modal
+function closeEmailHistoryModal() {
+    document.getElementById('emailHistoryModal').classList.add('hidden');
+}
+
+// Display email history
+function displayEmailHistory(history) {
+    const container = document.getElementById('emailHistoryList');
+    
+    if (history.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-600 py-8">No email history found for this event.</p>';
+        return;
+    }
+    
+    const historyHtml = history.map(email => {
+        const sentAt = new Date(email.sent_at).toLocaleString();
+        const emailType = email.email_type === 'attestation' ? 'Attestation' : 'Custom Email';
+        const typeColor = email.email_type === 'attestation' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+        const attachmentsCount = email.attachments ? email.attachments.length : 0;
+        
+        return `
+            <div class="border rounded-lg p-4 mb-4 hover:bg-gray-50">
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-2 py-1 rounded text-xs font-medium ${typeColor}">${emailType}</span>
+                            <span class="text-sm text-gray-500">${sentAt}</span>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-1">${email.subject}</h3>
+                        <p class="text-gray-600 text-sm mb-2">${email.message.substring(0, 100)}${email.message.length > 100 ? '...' : ''}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-500">Recipients:</span>
+                        <span class="font-medium">${email.recipients_count}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Sent:</span>
+                        <span class="font-medium text-green-600">${email.sent_count}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Failed:</span>
+                        <span class="font-medium text-red-600">${email.failed_count}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Attachments:</span>
+                        <span class="font-medium">${attachmentsCount}</span>
+                    </div>
+                </div>
+                
+                ${attachmentsCount > 0 ? `
+                    <div class="mt-3 pt-3 border-t">
+                        <p class="text-sm text-gray-600 mb-2">Attachments:</p>
+                        <div class="flex flex-wrap gap-2">
+                            ${email.attachments.map(file => `
+                                <span class="px-2 py-1 bg-gray-100 rounded text-xs">
+                                    <i class="fas fa-paperclip mr-1"></i>${file.split('/').pop()}
+                                </span>
+                            `).join('')}
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Files are kept for 30 days after sending
+                        </p>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = historyHtml;
+}
+
 // Wire selection and sending logic for attestations
 function wireAttestationsSelection() {
     const selectAll = document.getElementById('selectAllAttestations');

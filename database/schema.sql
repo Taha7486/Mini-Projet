@@ -143,6 +143,27 @@ CREATE TABLE pending_signups (
 	INDEX idx_token (verify_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Email history table (track all sent emails)
+CREATE TABLE email_history (
+    email_id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    organizer_id INT NOT NULL,
+    email_type ENUM('custom_email', 'attestation') NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    recipients_count INT NOT NULL DEFAULT 0,
+    sent_count INT NOT NULL DEFAULT 0,
+    failed_count INT NOT NULL DEFAULT 0,
+    attachments JSON NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE,
+    FOREIGN KEY (organizer_id) REFERENCES organizers(organizer_id) ON DELETE CASCADE,
+    INDEX idx_event (event_id),
+    INDEX idx_organizer (organizer_id),
+    INDEX idx_type (email_type),
+    INDEX idx_sent_at (sent_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Insert default admin account
 -- Password: Admin123! (hashed with bcrypt)
 INSERT INTO accounts (nom, email, password) VALUES 

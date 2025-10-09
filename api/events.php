@@ -62,6 +62,9 @@ try {
         case 'send_custom_email':
             handleSendCustomEmail($db, $input);
             break;
+        case 'get_email_history':
+            handleGetEmailHistory($db, $input);
+            break;
         default:
             echo json_encode(['success' => false, 'message' => 'Invalid action']);
     }
@@ -363,6 +366,11 @@ function handleSendAttestations($db, $input) {
         if ($ok) { $sent++; }
     }
 
+    // Record email history for attestations
+    $subject = 'Your Attendance Certificate - ' . $event['title'];
+    $message = 'Please find attached your attendance certificate for ' . $event['title'] . '.';
+    recordEmailHistory($db, $event_id, $organizer->organizer_id, 'attestation', $subject, $message, count($rows), $sent, count($rows) - $sent, []);
+
     echo json_encode(['success' => true, 'sent' => $sent, 'total' => count($rows), 'results' => $results]);
 }
 
@@ -591,16 +599,104 @@ function handleSendCustomEmail($db, $input) {
         if ($ok) { $sent++; }
     }
 
-    // Clean up uploaded files after sending
-    if (!empty($validAttachments)) {
-        foreach ($validAttachments as $filePath) {
-            if (file_exists($filePath) && strpos($filePath, '../storage/email_attachments/') === 0) {
-                unlink($filePath);
-            }
-        }
-    }
+    // Keep uploaded files for history (optional cleanup after 30 days)
+    // Files are kept in storage/email_attachments/ for future reference
+
+    // Record email history
+    recordEmailHistory($db, $event_id, $organizer->organizer_id, 'custom_email', $subject, $message, count($rows), $sent, count($rows) - $sent, $validAttachments);
 
     echo json_encode(['success' => true, 'sent' => $sent, 'total' => count($rows), 'results' => $results]);
+}
+
+function recordEmailHistory($db, $event_id, $organizer_id, $email_type, $subject, $message, $recipients_count, $sent_count, $failed_count, $attachments = []) {
+    try {
+        $attachmentsJson = !empty($attachments) ? json_encode($attachments) : null;
+        
+        $query = "INSERT INTO email_history (event_id, organizer_id, email_type, subject, message, recipients_count, sent_count, failed_count, attachments) 
+                  VALUES (:event_id, :organizer_id, :email_type, :subject, :message, :recipients_count, :sent_count, :failed_count, :attachments)";
+        
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':event_id', $event_id, PDO::PARAM_INT);
+        $stmt->bindParam(':organizer_id', $organizer_id, PDO::PARAM_INT);
+        $stmt->bindParam(':email_type', $email_type, PDO::PARAM_STR);
+        $stmt->bindParam(':subject', $subject, PDO::PARAM_STR);
+        $stmt->bindParam(':message', $message, PDO::PARAM_STR);
+        $stmt->bindParam(':recipients_count', $recipients_count, PDO::PARAM_INT);
+        $stmt->bindParam(':sent_count', $sent_count, PDO::PARAM_INT);
+        $stmt->bindParam(':failed_count', $failed_count, PDO::PARAM_INT);
+        $stmt->bindParam(':attachments', $attachmentsJson, PDO::PARAM_STR);
+        
+        $stmt->execute();
+    } catch (Exception $e) {
+        // Log error but don't fail the email sending
+        error_log("Failed to record email history: " . $e->getMessage());
+    }
+}
+
+function handleGetEmailHistory($db, $input) {
+    // Check if user is logged in
+    if (!isLoggedIn()) {
+        throw new Exception('You must be logged in');
+    }
+
+    $event_id = intval($input['event_id'] ?? 0);
+    $organizer_id = null;
+
+    // Get organizer ID
+    if (isAdmin()) {
+        // Admins can see all email history
+        $organizer_id = null;
+    } else {
+        // Organizers can only see their own email history
+        $organizer = new Organizer($db);
+        $organizer->id = $_SESSION['user_id'];
+        if (!$organizer->getProfile()) {
+            throw new Exception('Organizer profile not found');
+        }
+        $organizer_id = $organizer->organizer_id;
+    }
+
+    // Build query
+    $query = "SELECT eh.*, e.title as event_title, a.nom as organizer_name 
+              FROM email_history eh 
+              INNER JOIN events e ON eh.event_id = e.event_id 
+              INNER JOIN organizers o ON eh.organizer_id = o.organizer_id
+              INNER JOIN participants p ON o.participant_id = p.participant_id
+              INNER JOIN accounts a ON p.account_id = a.id
+              WHERE 1=1";
+    
+    $params = [];
+    
+    if ($event_id > 0) {
+        $query .= " AND eh.event_id = :event_id";
+        $params[':event_id'] = $event_id;
+    }
+    
+    if ($organizer_id !== null) {
+        $query .= " AND eh.organizer_id = :organizer_id";
+        $params[':organizer_id'] = $organizer_id;
+    }
+    
+    $query .= " ORDER BY eh.sent_at DESC LIMIT 50";
+    
+    $stmt = $db->prepare($query);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->execute();
+    
+    $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Decode attachments JSON
+    foreach ($history as &$record) {
+        if ($record['attachments']) {
+            $record['attachments'] = json_decode($record['attachments'], true);
+        } else {
+            $record['attachments'] = [];
+        }
+    }
+    
+    echo json_encode(['success' => true, 'history' => $history]);
 }
 ?>
 

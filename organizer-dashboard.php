@@ -138,6 +138,9 @@ $allClubs = $club->getAll();
                             <button onclick="openEmailModal(<?= $event['event_id'] ?>, '<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>')" class="w-full px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200">
                                 <i class="fas fa-envelope mr-1"></i>Send Email
                             </button>
+                            <button onclick="openEmailHistoryModal(<?= $event['event_id'] ?>, '<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>')" class="w-full px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200">
+                                <i class="fas fa-history mr-1"></i>Email History
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -268,6 +271,27 @@ $allClubs = $club->getAll();
 
                 <div id="attestationsList" class="overflow-x-auto">
                     <!-- Participants will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email History Modal -->
+    <div id="emailHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-2xl font-semibold">Email History</h2>
+                        <p class="text-gray-600" id="emailHistoryEventTitle">Event: Loading...</p>
+                    </div>
+                    <button onclick="closeEmailHistoryModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <div id="emailHistoryList" class="overflow-x-auto">
+                    <!-- Email history will be loaded here -->
                 </div>
             </div>
         </div>
