@@ -14,6 +14,7 @@ if(isLoggedIn()) {
     <title>Login - Campus Events</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md space-y-4">
@@ -41,11 +42,15 @@ if(isLoggedIn()) {
                            placeholder="your.email@university.edu">
                 </div>
 
+
                 <div>
                     <label for="password" class="block text-sm font-medium mb-1">Password</label>
                     <input type="password" id="password" name="password" required
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                            placeholder="••••••••">
+                </div>
+                <div>
+                    <div class="h-captcha" data-sitekey="1396d050-6650-4506-b164-48ac8fe4a3b0"></div>
                 </div>
 
                 <button type="submit" id="submitBtn"
@@ -91,7 +96,7 @@ if(isLoggedIn()) {
             try {
                 const response = await fetch('api/auth.php', {
                     method: 'POST',
-                    body: JSON.stringify(payload),
+                    body: JSON.stringify({ ...payload, hcaptcha_token: (document.querySelector('[name="h-captcha-response"]')?.value || '') }),
                     headers: {
                         'Content-Type': 'application/json'
                     }

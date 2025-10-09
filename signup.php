@@ -14,6 +14,7 @@ if(isLoggedIn()) {
     <title>Sign Up - Campus Events</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-4xl space-y-4">
@@ -111,31 +112,9 @@ if(isLoggedIn()) {
                     </div>
                 </div>
 
-                <!-- CAPTCHA -->
+                <!-- hCaptcha -->
                 <div class="pt-4 border-t">
-                    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <input type="checkbox" id="captcha" name="captcha" required
-                                       class="w-5 h-5 cursor-pointer">
-                                <label for="captcha" class="cursor-pointer select-none">
-                                    I'm not a robot
-                                </label>
-                            </div>
-                            <div class="flex flex-col items-end gap-1">
-                                <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" 
-                                     alt="reCAPTCHA" class="h-10 w-10">
-                                <div class="flex flex-col items-end">
-                                    <span class="text-xs text-gray-600">reCAPTCHA</span>
-                                    <div class="flex gap-1 text-xs text-gray-500">
-                                        <a href="#" class="hover:underline">Privacy</a>
-                                        <span>-</span>
-                                        <a href="#" class="hover:underline">Terms</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="h-captcha" data-sitekey="1396d050-6650-4506-b164-48ac8fe4a3b0"></div>
                 </div>
 
                 <button type="submit" id="submitBtn"
@@ -206,9 +185,10 @@ if(isLoggedIn()) {
                 return;
             }
 
-            // Validate CAPTCHA
-            if (!document.getElementById('captcha').checked) {
-                errorText.textContent = "Please verify that you're not a robot";
+            // Validate hCaptcha
+            const hToken = (document.querySelector('[name="h-captcha-response"]')?.value || '');
+            if (!hToken) {
+                errorText.textContent = "Please complete the captcha";
                 errorMessage.classList.remove('hidden');
                 return;
             }
@@ -235,7 +215,8 @@ if(isLoggedIn()) {
                 year: formData.get('year'),
                 department: effectiveDepartment,
                 phone_number: formData.get('phone_number'),
-                password: formData.get('password')
+                password: formData.get('password'),
+                hcaptcha_token: hToken
             };
 
             try {

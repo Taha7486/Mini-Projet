@@ -29,6 +29,43 @@ try {
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
+// hCaptcha verification helper
+function verifyHCaptcha($token) {
+	if (empty($token)) {
+		return [false, 'Captcha token missing'];
+	}
+	$cfgPath = __DIR__ . '/../config/captcha.php';
+	if (!file_exists($cfgPath)) {
+		return [false, 'Captcha configuration missing'];
+	}
+	$cfg = require $cfgPath;
+	$secret = $cfg['secret_key'] ?? '';
+	if (empty($secret)) {
+		return [false, 'Captcha secret not configured'];
+	}
+
+	$ch = curl_init('https://hcaptcha.com/siteverify');
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+		'secret' => $secret,
+		'response' => $token,
+		'remoteip' => $_SERVER['REMOTE_ADDR'] ?? null,
+	]));
+	$response = curl_exec($ch);
+	$error = curl_error($ch);
+	curl_close($ch);
+
+	if ($response === false) {
+		return [false, 'Captcha verification request failed'];
+	}
+	$data = json_decode($response, true);
+	if (!is_array($data) || empty($data['success'])) {
+		return [false, 'Captcha verification failed'];
+	}
+	return [true, null];
+}
+
 try {
     switch($action) {
         case 'login':
@@ -54,6 +91,11 @@ try {
 }
 
 function handleLogin($db, $input) {
+	list($ok, $err) = verifyHCaptcha($input['hcaptcha_token'] ?? '');
+	if (!$ok) {
+		echo json_encode(['success' => false, 'message' => $err ?? 'Captcha failed']);
+		return;
+	}
     $email = $input['email'] ?? '';
     $password = $input['password'] ?? '';
 
@@ -101,6 +143,11 @@ function handleLogin($db, $input) {
 }
 
 function handleSignup($db, $input) {
+	list($ok, $err) = verifyHCaptcha($input['hcaptcha_token'] ?? '');
+	if (!$ok) {
+		echo json_encode(['success' => false, 'message' => $err ?? 'Captcha failed']);
+		return;
+	}
     $nom = $input['nom'] ?? '';
     $email = $input['email'] ?? '';
     $student_id = $input['student_id'] ?? '';
@@ -136,6 +183,11 @@ function handleSignup($db, $input) {
 }
 
 function handleRequestSignup($db, $input) {
+	list($ok, $err) = verifyHCaptcha($input['hcaptcha_token'] ?? '');
+	if (!$ok) {
+		echo json_encode(['success' => false, 'message' => $err ?? 'Captcha failed']);
+		return;
+	}
     $nom = trim($input['nom'] ?? '');
     $email = trim($input['email'] ?? '');
     $student_id = trim($input['student_id'] ?? '');
