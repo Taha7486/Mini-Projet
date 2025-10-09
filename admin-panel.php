@@ -81,13 +81,7 @@ $allClubs = $admin->getAllClubs();
                         <p class="text-gray-600">Review and approve or reject organizer access and club change requests</p>
                     </div>
                     
-                    <?php if (empty($pendingRequests)): ?>
-                    <div class="text-center py-12">
-                        <i class="fas fa-check-circle text-6xl text-green-300 mb-4"></i>
-                        <h3 class="text-xl font-semibold mb-2">All caught up!</h3>
-                        <p class="text-gray-600">No pending organizer requests at the moment</p>
-                    </div>
-                    <?php else: ?>
+                    <?php if (!empty($pendingRequests)): ?>
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead class="bg-gray-50">
@@ -223,58 +217,59 @@ $allClubs = $admin->getAllClubs();
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="space-y-3">
                     <?php foreach ($allClubs as $club): 
                         $clubOrganizers = $admin->getClubOrganizers($club['club_id']);
                     ?>
-                    <div class="border rounded-lg p-4">
-                        <div class="flex items-start justify-between mb-2">
-                            <div>
-                                <h3 class="font-semibold"><?= htmlspecialchars($club['nom']) ?></h3>
-                                <p class="text-sm text-gray-600"><?= htmlspecialchars($club['description'] ?? 'No description') ?></p>
-                            </div>
-                        </div>
-                        
-                        <div class="text-sm text-gray-500 mb-3">
-                            <i class="fas fa-calendar mr-1"></i>
-                            Created <?= date('M d, Y', strtotime($club['created_at'])) ?>
-                        </div>
-
-                        <!-- Organizers Section -->
-                        <div class="mb-4">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i class="fas fa-user-tie text-gray-400"></i>
-                                <span class="font-medium text-sm">Organizers (<?= count($clubOrganizers) ?>)</span>
+                    <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-users text-gray-400"></i>
+                                        <h3 class="font-semibold text-lg"><?= htmlspecialchars($club['nom']) ?></h3>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                                        <div class="flex items-center gap-1">
+                                            <i class="fas fa-user-tie"></i>
+                                            <span><?= count($clubOrganizers) ?> organizers</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <i class="fas fa-calendar"></i>
+                                            <span><?= date('M d, Y', strtotime($club['created_at'])) ?></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <?php if (!empty($club['description'])): ?>
+                                <p class="text-sm text-gray-600 mt-1 ml-6"><?= htmlspecialchars($club['description']) ?></p>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($clubOrganizers)): ?>
+                                <div class="mt-2 ml-6">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <?php foreach ($clubOrganizers as $organizer): ?>
+                                            <div class="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded text-xs">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                                <span class="text-blue-800"><?= htmlspecialchars($organizer['nom']) ?></span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
                             </div>
                             
-                            <?php if (empty($clubOrganizers)): ?>
-                                <p class="text-xs text-gray-500 italic">No organizers assigned</p>
-                            <?php else: ?>
-                                <div class="space-y-2 max-h-24 overflow-y-auto">
-                                    <?php foreach ($clubOrganizers as $organizer): ?>
-                                        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded text-xs">
-                                            <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                                <i class="fas fa-user text-blue-600 text-xs"></i>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="font-medium truncate"><?= htmlspecialchars($organizer['nom']) ?></p>
-                                                <p class="text-gray-500 truncate"><?= htmlspecialchars($organizer['student_id']) ?></p>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <button onclick='editClub(<?= json_encode($club) ?>)' 
-                                    class="flex-1 px-3 py-2 border rounded-lg hover:bg-gray-50 text-sm">
-                                <i class="fas fa-edit mr-1"></i>Edit
-                            </button>
-                            <button onclick="deleteClub(<?= $club['club_id'] ?>)" 
-                                    class="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
-                                <i class="fas fa-trash mr-1"></i>Delete
-                            </button>
+                            <div class="flex gap-2 ml-4">
+                                <button onclick='editClub(<?= json_encode($club) ?>)' 
+                                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 text-sm">
+                                    <i class="fas fa-edit mr-1"></i>Edit
+                                </button>
+                                <button onclick="deleteClub(<?= $club['club_id'] ?>)" 
+                                        class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                                    <i class="fas fa-trash mr-1"></i>Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -350,28 +345,45 @@ $allClubs = $admin->getAllClubs();
         
         <!-- Add Admin Tab -->
         <div id="content-add-admin" class="tab-content hidden">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">Create Admin</h2>
+                <div class="bg-white rounded-lg shadow-md p-8">
+                    <h2 class="text-2xl font-semibold mb-2">Create Admin</h2>
+                    <p class="text-gray-600 mb-6">Fill in the details to create a new administrator account</p>
 
-                <form id="addAdminForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-1">Full Name *</label>
-                        <input type="text" name="nom" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                    <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                        <span id="errorText"></span>
                     </div>
 
-                    <div class="md:col-span-1">
-                        <label class="block text-sm font-medium mb-1">Email *</label>
-                        <input type="email" name="email" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                    <form id="addAdminForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="nom" class="block text-sm font-medium mb-1">Full Name *</label>
+                            <input type="text" id="nom" name="nom" required 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                    placeholder="John Doe">
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium mb-1">Email *</label>
+                            <input type="email" id="email" name="email" required 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                    placeholder="admin@campus.edu">
+                        </div>
                     </div>
 
-                    <div class="md:col-span-1">
-                        <label class="block text-sm font-medium mb-1">Password *</label>
-                        <input type="password" name="password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                    <div>
+                        <label for="password" class="block text-sm font-medium mb-1">Password *</label>
+                        <input type="password" id="password" name="password" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                placeholder="Enter a strong password">
                     </div>
 
-                    <div class="md:col-span-2 flex gap-3 pt-2">
-                        <button type="reset" class="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">Reset</button>
-                        <button id="addAdminSubmit" type="submit" class="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">Create Admin</button>
+                    <div class="flex gap-4 pt-4">
+                        <button type="reset" class="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
+                            Reset Form
+                        </button>
+                        <button id="addAdminSubmit" type="submit" class="flex-1 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-medium">
+                            Create Admin Account
+                        </button>
                     </div>
                 </form>
             </div>
