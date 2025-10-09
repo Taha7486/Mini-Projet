@@ -7,6 +7,7 @@ try {
     require_once '../config/database.php';
     require_once '../classes/Event.php';
     require_once '../classes/Organizer.php';
+    require_once '../classes/Participant.php';
     require_once '../includes/session.php';
 
     $database = new Database();
@@ -41,6 +42,9 @@ try {
             break;
         case 'delete':
             handleDeleteEvent($db, $input);
+            break;
+        case 'register':
+            handleRegisterForEvent($db, $input);
             break;
         case 'get_participants':
             handleGetParticipants($db, $input);
@@ -169,6 +173,48 @@ function handleDeleteEvent($db, $input) {
         echo json_encode(['success' => true, 'message' => 'Event deleted successfully']);
     } else {
         throw new Exception('Failed to delete event or you are not authorized');
+    }
+}
+
+function handleRegisterForEvent($db, $input) {
+    // Check if user is logged in
+    if (!isLoggedIn()) {
+        throw new Exception('You must be logged in to register for events');
+    }
+
+    $event_id = intval($input['event_id'] ?? 0);
+
+    if($event_id <= 0) {
+        throw new Exception('Event ID is required');
+    }
+
+    // Check if event exists and has capacity
+    $eventQuery = "SELECT capacity, registered_count FROM events WHERE event_id = :event_id";
+    $eventStmt = $db->prepare($eventQuery);
+    $eventStmt->bindParam(":event_id", $event_id);
+    $eventStmt->execute();
+
+    if($eventStmt->rowCount() == 0) {
+        throw new Exception('Event not found');
+    }
+
+    $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
+    if($event['registered_count'] >= $event['capacity']) {
+        throw new Exception('Event is full');
+    }
+
+    // Create participant instance and register for event
+    $participant = new Participant($db);
+    $participant->id = $_SESSION['user_id'];
+    
+    if (!$participant->getProfile()) {
+        throw new Exception('Participant profile not found');
+    }
+
+    if($participant->registerForEvent($event_id)) {
+        echo json_encode(['success' => true, 'message' => 'Successfully registered for event']);
+    } else {
+        throw new Exception('Failed to register for event. You may already be registered.');
     }
 }
 
