@@ -14,6 +14,7 @@ $admin->id = $_SESSION['user_id'];
 
 // Get all data
 $pendingRequests = $admin->getPendingRequests();
+$requestHistory = $admin->getOrganizerRequestHistory();
 $allUsers = $admin->getAllUsers();
 $allClubs = $admin->getAllClubs();
 ?>
@@ -54,7 +55,7 @@ $allClubs = $admin->getAllClubs();
     <div class="container mx-auto px-4 mt-6">
         <div class="bg-white rounded-lg shadow-sm p-2 flex gap-2">
             <button onclick="showTab('requests')" id="tab-requests" class="flex-1 px-4 py-2 rounded-lg bg-black text-white">
-                <i class="fas fa-user-clock mr-2"></i>Organizer Requests (<?= count($pendingRequests) ?>)
+                <i class="fas fa-user-clock mr-2"></i>Requests (<?= count($pendingRequests) + count($requestHistory) ?>)
             </button>
             <button onclick="showTab('clubs')" id="tab-clubs" class="flex-1 px-4 py-2 rounded-lg hover:bg-gray-100">
                 <i class="fas fa-users mr-2"></i>Clubs (<?= count($allClubs) ?>)
@@ -70,79 +71,145 @@ $allClubs = $admin->getAllClubs();
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
-        <!-- Organizer Requests Tab -->
+        <!-- Requests Tab -->
         <div id="content-requests" class="tab-content">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">Pending Organizer Requests</h2>
-                
-                <?php if (empty($pendingRequests)): ?>
-                <div class="text-center py-12">
-                    <i class="fas fa-check-circle text-6xl text-green-300 mb-4"></i>
-                    <h3 class="text-xl font-semibold mb-2">All caught up!</h3>
-                    <p class="text-gray-600">No pending organizer requests at the moment</p>
-                </div>
-                <?php else: ?>
-                <div class="space-y-4">
-                    <?php foreach ($pendingRequests as $request): ?>
-                    <div class="border rounded-lg p-4">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <i class="fas fa-user text-gray-400"></i>
-                                    <h3 class="font-semibold"><?= htmlspecialchars($request['user_name']) ?></h3>
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-sm">
-                                        <?= htmlspecialchars($request['email']) ?>
-                                    </span>
-                                </div>
-                                
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
-                                    <div>
-                                        <i class="fas fa-id-card mr-1"></i>
-                                        <?= htmlspecialchars($request['student_id']) ?>
-                                    </div>
-                                    <div>
-                                        <i class="fas fa-building mr-1"></i>
-                                        <?= htmlspecialchars($request['department']) ?>
-                                    </div>
-                                    <div>
-                                        <i class="fas fa-graduation-cap mr-1"></i>
-                                        <?= $request['year'] === 'graduate' ? 'Graduate' : $request['year'] . ' Year' ?>
-                                    </div>
-                                    <div>
-                                        <i class="fas fa-phone mr-1"></i>
-                                        <?= htmlspecialchars($request['phone_number']) ?>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-2 mb-2">
-                                    <i class="fas fa-users text-gray-400"></i>
-                                    <span class="font-medium">Requested Club:</span>
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                                        <?= htmlspecialchars($request['club_name']) ?>
-                                    </span>
-                                </div>
-
-                                <div class="text-sm text-gray-500">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    Requested <?= date('M d, Y \a\t g:i A', strtotime($request['requested_at'])) ?>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-2 ml-4">
-                                <button onclick="handleRequest(<?= $request['request_id'] ?>, 'approved')" 
-                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                                    <i class="fas fa-check mr-1"></i>Approve
-                                </button>
-                                <button onclick="handleRequest(<?= $request['request_id'] ?>, 'rejected')" 
-                                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                                    <i class="fas fa-times mr-1"></i>Reject
-                                </button>
-                            </div>
-                        </div>
+            <div class="space-y-6">
+                <!-- Pending Requests Section -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-2">Pending Requests (<?= count($pendingRequests) ?>)</h2>
+                        <p class="text-gray-600">Review and approve or reject organizer access and club change requests</p>
                     </div>
-                    <?php endforeach; ?>
+                    
+                    <?php if (empty($pendingRequests)): ?>
+                    <div class="text-center py-12">
+                        <i class="fas fa-check-circle text-6xl text-green-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">All caught up!</h3>
+                        <p class="text-gray-600">No pending organizer requests at the moment</p>
+                    </div>
+                    <?php else: ?>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Applicant</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Email</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Request Type</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Current Clubs</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Requested Clubs</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($pendingRequests as $request): ?>
+                                <tr class="border-t hover:bg-gray-50">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-user text-gray-400"></i>
+                                            <span class="font-medium"><?= htmlspecialchars($request['user_name']) ?></span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-envelope text-gray-400"></i>
+                                            <span><?= htmlspecialchars($request['email']) ?></span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-3 py-1 bg-gray-800 text-white rounded-full text-sm font-medium">
+                                            New Organizer
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-500">-</td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                                            <?= htmlspecialchars($request['club_name']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-600">
+                                        <?= date('n/j/Y', strtotime($request['requested_at'])) ?>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex gap-2">
+                                            <button onclick="handleRequest(<?= $request['request_id'] ?>, 'approved')" 
+                                                    class="px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-700 text-sm">
+                                                <i class="fas fa-check mr-1"></i>Approve
+                                            </button>
+                                            <button onclick="handleRequest(<?= $request['request_id'] ?>, 'rejected')" 
+                                                    class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                                                <i class="fas fa-times mr-1"></i>Reject
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
+
+                <!-- Request History Section -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-2">Request History</h2>
+                        <p class="text-gray-600">Previously approved or rejected requests</p>
+                    </div>
+                    
+                    <?php if (empty($requestHistory)): ?>
+                    <div class="text-center py-12">
+                        <i class="fas fa-history text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">No History Yet</h3>
+                        <p class="text-gray-600">No organizer requests have been processed yet</p>
+                    </div>
+                    <?php else: ?>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Applicant</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Type</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Clubs</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($requestHistory as $request): ?>
+                                <tr class="border-t hover:bg-gray-50">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-user text-gray-400"></i>
+                                            <span class="font-medium"><?= htmlspecialchars($request['user_name']) ?></span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-3 py-1 bg-gray-800 text-white rounded-full text-sm font-medium">
+                                            New Organizer
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                                            <?= htmlspecialchars($request['club_name']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-600">
+                                        <?= date('n/j/Y', strtotime($request['requested_at'])) ?>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium
+                                            <?= $request['status'] === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                                            <?= ucfirst($request['status']) ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
 
@@ -157,7 +224,9 @@ $allClubs = $admin->getAllClubs();
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <?php foreach ($allClubs as $club): ?>
+                    <?php foreach ($allClubs as $club): 
+                        $clubOrganizers = $admin->getClubOrganizers($club['club_id']);
+                    ?>
                     <div class="border rounded-lg p-4">
                         <div class="flex items-start justify-between mb-2">
                             <div>
@@ -169,6 +238,32 @@ $allClubs = $admin->getAllClubs();
                         <div class="text-sm text-gray-500 mb-3">
                             <i class="fas fa-calendar mr-1"></i>
                             Created <?= date('M d, Y', strtotime($club['created_at'])) ?>
+                        </div>
+
+                        <!-- Organizers Section -->
+                        <div class="mb-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-user-tie text-gray-400"></i>
+                                <span class="font-medium text-sm">Organizers (<?= count($clubOrganizers) ?>)</span>
+                            </div>
+                            
+                            <?php if (empty($clubOrganizers)): ?>
+                                <p class="text-xs text-gray-500 italic">No organizers assigned</p>
+                            <?php else: ?>
+                                <div class="space-y-2 max-h-24 overflow-y-auto">
+                                    <?php foreach ($clubOrganizers as $organizer): ?>
+                                        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded text-xs">
+                                            <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600 text-xs"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-medium truncate"><?= htmlspecialchars($organizer['nom']) ?></p>
+                                                <p class="text-gray-500 truncate"><?= htmlspecialchars($organizer['student_id']) ?></p>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="flex gap-2">

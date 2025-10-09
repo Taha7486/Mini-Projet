@@ -299,6 +299,27 @@ class Admin extends Account {
         return $updateStmt->execute();
     }
 
+    // Get organizer request history
+    public function getOrganizerRequestHistory() {
+        $query = "SELECT r.*, p.student_id, p.department, p.year, p.phone_number,
+                  a.nom as user_name, a.email,
+                  c.nom as club_name,
+                  ad_acc.nom as decided_by_name
+                  FROM organizer_requests r
+                  INNER JOIN participants p ON r.participant_id = p.participant_id
+                  INNER JOIN accounts a ON p.account_id = a.id
+                  INNER JOIN clubs c ON r.club_id = c.club_id
+                  LEFT JOIN admins ad ON r.decided_by = ad.admin_id
+                  LEFT JOIN accounts ad_acc ON ad.account_id = ad_acc.id
+                  WHERE r.status != 'pending'
+                  ORDER BY r.decided_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Create organizer request
     public function createOrganizerRequest($participantId, $clubId) {
         // Check if request already exists for this participant and club
