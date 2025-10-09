@@ -88,7 +88,17 @@ $clubs = $club->getAll();
                 <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow event-card" 
                      data-club="<?= $event['club_id'] ?>"
                      data-title="<?= strtolower($event['title']) ?>"
-                     data-description="<?= strtolower($event['description']) ?>">
+                     data-description="<?= strtolower($event['description']) ?>"
+                     data-event-id="<?= $event['event_id'] ?>"
+                     data-event-title="<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>"
+                     data-event-description="<?= htmlspecialchars($event['description'], ENT_QUOTES) ?>"
+                     data-event-date="<?= htmlspecialchars($event['date_event'], ENT_QUOTES) ?>"
+                     data-event-time="<?= htmlspecialchars($event['time_event'], ENT_QUOTES) ?>"
+                     data-event-location="<?= htmlspecialchars($event['location'], ENT_QUOTES) ?>"
+                     data-event-capacity="<?= (int)$event['capacity'] ?>"
+                     data-event-registered="<?= (int)$event['registered_count'] ?>"
+                     data-event-club-name="<?= htmlspecialchars($event['club_name'], ENT_QUOTES) ?>"
+                     data-event-image-url="<?= htmlspecialchars($event['image_url'] ?? '', ENT_QUOTES) ?>">
                     <div class="relative h-48 bg-gray-200">
                         <?php if ($event['image_url']): ?>
                             <img src="<?= htmlspecialchars($event['image_url']) ?>" 
@@ -122,7 +132,7 @@ $clubs = $club->getAll();
                         <?php 
                         $spotsLeft = $event['capacity'] - $event['registered_count'];
                         ?>
-                        <button onclick="registerForEvent(<?= $event['event_id'] ?>)" 
+                        <button onclick="event.stopPropagation(); registerForEvent(<?= $event['event_id'] ?>)" 
                                 class="w-full py-2 bg-black text-white rounded-lg hover:bg-gray-800 <?= $spotsLeft == 0 ? 'opacity-50 cursor-not-allowed' : '' ?>"
                                 <?= $spotsLeft == 0 ? 'disabled' : '' ?>>
                             <?= $spotsLeft == 0 ? 'Event Full' : 'Register Now' ?>
@@ -140,6 +150,165 @@ $clubs = $club->getAll();
         <?php endif; ?>
     </main>
 
+    <!-- Event Details Modal -->
+    <div id="eventDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-4xl rounded-lg overflow-hidden shadow-lg max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-calendar-alt text-2xl text-gray-600"></i>
+                    <h3 id="detailTitle" class="text-2xl font-bold text-gray-800">Event Details</h3>
+                </div>
+                <button onclick="closeEventDetails()" class="text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6 space-y-6">
+                <!-- Event Image and Club -->
+                <div id="detailImageWrapper" class="relative h-64 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg overflow-hidden hidden">
+                    <img id="detailImage" src="" alt="Event image" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black bg-opacity-20"></div>
+                    <div class="absolute top-4 right-4">
+                        <span id="detailClubName" class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-semibold text-gray-800 shadow-lg"></span>
+                    </div>
+                    <div class="absolute bottom-4 left-4 text-white">
+                        <h4 id="detailTitleOverlay" class="text-2xl font-bold drop-shadow-lg"></h4>
+                    </div>
+                </div>
+
+                <!-- Event Title (when no image) -->
+                <div id="detailTitleSection" class="text-center">
+                    <h4 id="detailTitleText" class="text-3xl font-bold text-gray-800 mb-2"></h4>
+                    <div class="flex items-center justify-center gap-2 text-gray-600">
+                        <i class="fas fa-building"></i>
+                        <span id="detailClubNameText" class="text-lg font-medium"></span>
+                    </div>
+                </div>
+
+                <!-- Event Description -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h5 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-info-circle text-blue-600"></i>
+                        Description
+                    </h5>
+                    <p id="detailDescription" class="text-gray-700 leading-relaxed"></p>
+                </div>
+
+                <!-- Event Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Date & Time -->
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h5 class="text-lg font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                            <i class="fas fa-calendar text-blue-600"></i>
+                            Date & Time
+                        </h5>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-3 text-gray-700">
+                                <i class="fas fa-calendar-day text-blue-500"></i>
+                                <span id="detailDate" class="font-medium"></span>
+                            </div>
+                            <div class="flex items-center gap-3 text-gray-700">
+                                <i class="fas fa-clock text-blue-500"></i>
+                                <span id="detailTime" class="font-medium"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h5 class="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
+                            <i class="fas fa-map-marker-alt text-green-600"></i>
+                            Location
+                        </h5>
+                        <div class="flex items-center gap-3 text-gray-700">
+                            <i class="fas fa-location-dot text-green-500"></i>
+                            <span id="detailLocation" class="font-medium"></span>
+                        </div>
+                    </div>
+
+                    <!-- Capacity & Registration -->
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h5 class="text-lg font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                            <i class="fas fa-users text-purple-600"></i>
+                            Registration
+                        </h5>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-700">Registered:</span>
+                                <span id="detailRegistered" class="font-bold text-purple-600"></span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-700">Capacity:</span>
+                                <span id="detailCapacity" class="font-bold text-purple-600"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div id="detailProgressBar" class="bg-purple-500 h-3 rounded-full transition-all duration-300"></div>
+                            </div>
+                            <div class="text-center">
+                                <span id="detailSpotsLeft" class="text-sm font-medium text-gray-600"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Status -->
+                    <div class="bg-orange-50 rounded-lg p-4">
+                        <h5 class="text-lg font-semibold text-orange-800 mb-3 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-orange-600"></i>
+                            Status
+                        </h5>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-3">
+                                <span id="detailStatusIcon" class="text-2xl"></span>
+                                <span id="detailStatusText" class="font-semibold"></span>
+                            </div>
+                            <div id="detailStatusMessage" class="text-sm text-gray-600"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h5 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-clipboard-list text-gray-600"></i>
+                        Additional Information
+                    </h5>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="flex items-center gap-2 text-gray-600">
+                            <i class="fas fa-hashtag"></i>
+                            <span>Event ID: <span id="detailEventId" class="font-mono font-semibold"></span></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-600">
+                            <i class="fas fa-building"></i>
+                            <span>Club ID: <span id="detailClubId" class="font-mono font-semibold"></span></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-600">
+                            <i class="fas fa-percentage"></i>
+                            <span>Fill Rate: <span id="detailFillRate" class="font-semibold"></span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
+                <div class="text-sm text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Click outside the modal or press ESC to close
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="closeEventDetails()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Close
+                    </button>
+                    <button id="detailRegisterBtn" class="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-user-plus mr-2"></i>Register Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="border-t mt-8 bg-white">
         <div class="container mx-auto px-4 py-4 text-center">
@@ -152,6 +321,16 @@ $clubs = $club->getAll();
         const searchInput = document.getElementById('searchInput');
         const clubFilter = document.getElementById('clubFilter');
         const eventCards = document.querySelectorAll('.event-card');
+        const detailsModal = document.getElementById('eventDetailsModal');
+        const detailTitle = document.getElementById('detailTitle');
+        const detailDescription = document.getElementById('detailDescription');
+        const detailDateTime = document.getElementById('detailDateTime');
+        const detailLocation = document.getElementById('detailLocation');
+        const detailCapacity = document.getElementById('detailCapacity');
+        const detailImage = document.getElementById('detailImage');
+        const detailImageWrapper = document.getElementById('detailImageWrapper');
+        const detailClubName = document.getElementById('detailClubName');
+        const detailRegisterBtn = document.getElementById('detailRegisterBtn');
 
         function filterEvents() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -171,6 +350,143 @@ $clubs = $club->getAll();
 
         searchInput.addEventListener('input', filterEvents);
         clubFilter.addEventListener('change', filterEvents);
+
+        // Open details on card click
+        eventCards.forEach(card => {
+            card.addEventListener('click', () => openEventDetails(card));
+        });
+
+        function openEventDetails(card) {
+            const id = parseInt(card.dataset.eventId, 10);
+            const title = card.dataset.eventTitle || '';
+            const desc = card.dataset.eventDescription || '';
+            const date = card.dataset.eventDate || '';
+            const time = card.dataset.eventTime || '';
+            const location = card.dataset.eventLocation || '';
+            const capacity = parseInt(card.dataset.eventCapacity || '0', 10);
+            const registered = parseInt(card.dataset.eventRegistered || '0', 10);
+            const clubName = card.dataset.eventClubName || '';
+            const imageUrl = card.dataset.eventImageUrl || '';
+            const clubId = card.dataset.club || '';
+
+            // Calculate additional details
+            const spotsLeft = capacity - registered;
+            const fillRate = capacity > 0 ? Math.round((registered / capacity) * 100) : 0;
+            const isFull = spotsLeft <= 0;
+            const isAlmostFull = spotsLeft <= 5 && spotsLeft > 0;
+
+            // Format date
+            const eventDate = new Date(date);
+            const formattedDate = eventDate.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Update basic info
+            detailTitle.textContent = title;
+            detailDescription.textContent = desc;
+
+            // Update image section
+            if (imageUrl) {
+                detailImageWrapper.classList.remove('hidden');
+                detailTitleSection.classList.add('hidden');
+                detailImage.src = imageUrl;
+                detailImage.alt = title;
+                detailClubName.textContent = clubName;
+                detailTitleOverlay.textContent = title;
+            } else {
+                detailImageWrapper.classList.add('hidden');
+                detailTitleSection.classList.remove('hidden');
+                detailTitleText.textContent = title;
+                detailClubNameText.textContent = clubName;
+            }
+
+            // Update date and time
+            document.getElementById('detailDate').textContent = formattedDate;
+            document.getElementById('detailTime').textContent = time;
+
+            // Update location
+            document.getElementById('detailLocation').textContent = location;
+
+            // Update registration details
+            document.getElementById('detailRegistered').textContent = registered;
+            document.getElementById('detailCapacity').textContent = capacity;
+            document.getElementById('detailSpotsLeft').textContent = 
+                spotsLeft === 0 ? 'Event is full' : 
+                spotsLeft === 1 ? '1 spot left' : 
+                `${spotsLeft} spots left`;
+
+            // Update progress bar
+            const progressBar = document.getElementById('detailProgressBar');
+            progressBar.style.width = `${fillRate}%`;
+            progressBar.className = `h-3 rounded-full transition-all duration-300 ${
+                isFull ? 'bg-red-500' : 
+                isAlmostFull ? 'bg-orange-500' : 
+                'bg-purple-500'
+            }`;
+
+            // Update status
+            const statusIcon = document.getElementById('detailStatusIcon');
+            const statusText = document.getElementById('detailStatusText');
+            const statusMessage = document.getElementById('detailStatusMessage');
+            
+            if (isFull) {
+                statusIcon.innerHTML = '<i class="fas fa-times-circle text-red-500"></i>';
+                statusText.textContent = 'Event Full';
+                statusText.className = 'font-semibold text-red-600';
+                statusMessage.textContent = 'No more spots available for this event.';
+            } else if (isAlmostFull) {
+                statusIcon.innerHTML = '<i class="fas fa-exclamation-triangle text-orange-500"></i>';
+                statusText.textContent = 'Almost Full';
+                statusText.className = 'font-semibold text-orange-600';
+                statusMessage.textContent = 'Only a few spots left! Register quickly.';
+            } else {
+                statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
+                statusText.textContent = 'Available';
+                statusText.className = 'font-semibold text-green-600';
+                statusMessage.textContent = 'Registration is open for this event.';
+            }
+
+            // Update additional information
+            document.getElementById('detailEventId').textContent = id;
+            document.getElementById('detailClubId').textContent = clubId;
+            document.getElementById('detailFillRate').textContent = `${fillRate}%`;
+
+            // Update register button
+            detailRegisterBtn.disabled = isFull;
+            detailRegisterBtn.textContent = isFull ? 'Event Full' : 'Register Now';
+            detailRegisterBtn.className = `px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                isFull ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'
+            }`;
+
+            detailRegisterBtn.onclick = (e) => { 
+                e.stopPropagation(); 
+                if (!isFull) {
+                    registerForEvent(id); 
+                }
+            };
+
+            detailsModal.classList.remove('hidden');
+        }
+
+        function closeEventDetails() {
+            detailsModal.classList.add('hidden');
+        }
+
+        // Close modal when clicking outside or pressing ESC
+        detailsModal.addEventListener('click', (e) => {
+            if (e.target === detailsModal) {
+                closeEventDetails();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !detailsModal.classList.contains('hidden')) {
+                closeEventDetails();
+            }
+        });
 
         // Register for event
         function registerForEvent(eventId) {

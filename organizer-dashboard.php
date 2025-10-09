@@ -37,7 +37,7 @@ $allClubs = $club->getAll();
                     <i class="fas fa-calendar-alt text-2xl"></i>
                     <div>
                         <h1 class="text-2xl font-semibold">Event Management</h1>
-                        <p class="text-gray-600 text-sm">Manage your events • Welcome, <?= htmlspecialchars($organizer->nom) ?></p>
+                        <p class="text-gray-600 text-sm">Manage your events • Welcome, <?= htmlspecialchars($organizer->nom ?? 'Organizer') ?></p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -88,25 +88,25 @@ $allClubs = $club->getAll();
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="relative h-48 bg-gray-200">
                     <?php if ($event['image_url']): ?>
-                    <img src="<?= htmlspecialchars($event['image_url']) ?>" alt="<?= htmlspecialchars($event['title']) ?>" class="w-full h-full object-cover">
+                    <img src="<?= htmlspecialchars($event['image_url'] ?? '') ?>" alt="<?= htmlspecialchars($event['title'] ?? 'Event') ?>" class="w-full h-full object-cover">
                     <?php endif; ?>
                     <span class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
-                        <?= htmlspecialchars($event['club_name']) ?>
+                        <?= htmlspecialchars($event['club_name'] ?? 'Unknown Club') ?>
                     </span>
                 </div>
                 
                 <div class="p-4">
-                    <h3 class="text-lg font-semibold mb-2"><?= htmlspecialchars($event['title']) ?></h3>
-                    <p class="text-gray-600 mb-4 line-clamp-2"><?= htmlspecialchars($event['description']) ?></p>
+                    <h3 class="text-lg font-semibold mb-2"><?= htmlspecialchars($event['title'] ?? 'Untitled Event') ?></h3>
+                    <p class="text-gray-600 mb-4 line-clamp-2"><?= htmlspecialchars($event['description'] ?? 'No description available') ?></p>
                     
                     <div class="space-y-2 mb-4">
                         <div class="flex items-center gap-2 text-gray-600 text-sm">
                             <i class="fas fa-calendar"></i>
-                            <span><?= date('M d, Y', strtotime($event['date_event'])) ?> • <?= htmlspecialchars($event['time_event']) ?></span>
+                            <span><?= date('M d, Y', strtotime($event['date_event'])) ?> • <?= htmlspecialchars($event['time_event'] ?? 'TBD') ?></span>
                         </div>
                         <div class="flex items-center gap-2 text-gray-600 text-sm">
                             <i class="fas fa-map-marker-alt"></i>
-                            <span><?= htmlspecialchars($event['location']) ?></span>
+                            <span><?= htmlspecialchars($event['location'] ?? 'Location TBD') ?></span>
                         </div>
                         <div class="flex items-center gap-2 text-gray-600 text-sm">
                             <i class="fas fa-users"></i>
@@ -184,7 +184,7 @@ $allClubs = $club->getAll();
                             <select id="club_id" name="club_id" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
                                 <option value="">Select a club</option>
                                 <?php foreach (isAdmin() ? $allClubs : $myClubs as $clubItem): ?>
-                                <option value="<?= $clubItem['club_id'] ?>"><?= htmlspecialchars($clubItem['nom']) ?></option>
+                                <option value="<?= $clubItem['club_id'] ?>"><?= htmlspecialchars($clubItem['nom'] ?? 'Unknown Club') ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
