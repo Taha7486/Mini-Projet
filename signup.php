@@ -228,7 +228,7 @@ if(isLoggedIn()) {
             }
 
             const payload = {
-                action: 'signup',
+                action: 'request_signup',
                 nom: formData.get('nom'),
                 email: formData.get('email'),
                 student_id: formData.get('student_id'),
@@ -250,8 +250,8 @@ if(isLoggedIn()) {
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Account created successfully!');
-                    window.location.href = 'index.php';
+                    alert('We sent you a verification link. Please check your email.');
+                    window.location.href = 'login.php';
                 } else {
                     errorText.textContent = data.message || 'Failed to create account';
                     errorMessage.classList.remove('hidden');

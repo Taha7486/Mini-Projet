@@ -11,7 +11,6 @@ $db = $database->getConnection();
 
 $organizer = new Organizer($db);
 $organizer->id = $_SESSION['user_id'];
-$organizer->participant_id = $_SESSION['participant_id'];
 $organizer->getProfile();
 
 $myEvents = $organizer->getMyEvents();
@@ -65,9 +64,11 @@ $allClubs = $club->getAll();
                 <h2 class="text-xl font-semibold">Your Events</h2>
                 <p class="text-gray-600"><?= count($myEvents) ?> <?= count($myEvents) === 1 ? 'event' : 'events' ?> total</p>
             </div>
+            <?php if (!isAdmin()): ?>
             <button onclick="openCreateDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
                 <i class="fas fa-plus mr-2"></i>Create Event
             </button>
+            <?php endif; ?>
         </div>
 
         <?php if (empty($myEvents)): ?>
@@ -75,9 +76,11 @@ $allClubs = $club->getAll();
             <i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
             <h3 class="text-xl font-semibold mb-2">No events yet</h3>
             <p class="text-gray-600 mb-4">Get started by creating your first event</p>
+            <?php if (!isAdmin()): ?>
             <button onclick="openCreateDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
                 <i class="fas fa-plus mr-2"></i>Create Event
             </button>
+            <?php endif; ?>
         </div>
         <?php else: ?>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
