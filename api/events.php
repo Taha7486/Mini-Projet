@@ -141,34 +141,50 @@ function handleUpdateEvent($db, $input) {
     $time_event = $input['time_event'] ?? '';
     $capacity = intval($input['capacity'] ?? 0);
     $image_url = trim($input['image_url'] ?? '');
+    $club_id = intval($input['club_id'] ?? 0);
 
     if($event_id <= 0 || empty($title) || empty($description) || empty($location) || 
-       empty($date_event) || empty($time_event) || $capacity <= 0) {
+       empty($date_event) || empty($time_event) || $capacity <= 0 || $club_id <= 0) {
         throw new Exception('All fields are required');
     }
 
-    $organizer = new Organizer($db);
-    $organizer->id = $_SESSION['user_id'];
-    
-    if (!$organizer->getProfile()) {
-        throw new Exception('Organizer profile not found');
-    }
-
-    $eventData = [
-        'title' => $title,
-        'description' => $description,
-        'location' => $location,
-        'date_event' => $date_event,
-        'time_event' => $time_event,
-        'capacity' => $capacity,
-        'image_url' => $image_url
-    ];
-
-    $allowAnyOwner = isAdmin();
-    if($organizer->modifyEvent($event_id, $eventData, $allowAnyOwner)) {
-        echo json_encode(['success' => true, 'message' => 'Event updated successfully']);
+    // Handle admin access
+    if (isAdmin()) {
+        require_once '../classes/Admin.php';
+        $admin = new Admin($db);
+        $admin->id = $_SESSION['user_id'];
+        
+        if($admin->updateEvent($event_id, $title, $description, $date_event, $time_event, 
+                              $location, $capacity, $image_url, $club_id)) {
+            echo json_encode(['success' => true, 'message' => 'Event updated successfully']);
+        } else {
+            throw new Exception('Failed to update event');
+        }
     } else {
-        throw new Exception('Failed to update event or you are not authorized');
+        // Handle organizer access
+        $organizer = new Organizer($db);
+        $organizer->id = $_SESSION['user_id'];
+        
+        if (!$organizer->getProfile()) {
+            throw new Exception('Organizer profile not found');
+        }
+
+        $eventData = [
+            'title' => $title,
+            'description' => $description,
+            'location' => $location,
+            'date_event' => $date_event,
+            'time_event' => $time_event,
+            'capacity' => $capacity,
+            'image_url' => $image_url,
+            'club_id' => $club_id
+        ];
+
+        if($organizer->modifyEvent($event_id, $eventData, false)) {
+            echo json_encode(['success' => true, 'message' => 'Event updated successfully']);
+        } else {
+            throw new Exception('Failed to update event or you are not authorized');
+        }
     }
 }
 
@@ -184,17 +200,31 @@ function handleDeleteEvent($db, $input) {
         throw new Exception('Event ID is required');
     }
 
-    $organizer = new Organizer($db);
-    $organizer->id = $_SESSION['user_id'];
-    
-    if (!$organizer->getProfile()) {
-        throw new Exception('Organizer profile not found');
-    }
-
-    if($organizer->deleteEvent($event_id)) {
-        echo json_encode(['success' => true, 'message' => 'Event deleted successfully']);
+    // Handle admin access
+    if (isAdmin()) {
+        require_once '../classes/Admin.php';
+        $admin = new Admin($db);
+        $admin->id = $_SESSION['user_id'];
+        
+        if($admin->deleteEvent($event_id)) {
+            echo json_encode(['success' => true, 'message' => 'Event deleted successfully']);
+        } else {
+            throw new Exception('Failed to delete event');
+        }
     } else {
-        throw new Exception('Failed to delete event or you are not authorized');
+        // Handle organizer access
+        $organizer = new Organizer($db);
+        $organizer->id = $_SESSION['user_id'];
+        
+        if (!$organizer->getProfile()) {
+            throw new Exception('Organizer profile not found');
+        }
+
+        if($organizer->deleteEvent($event_id)) {
+            echo json_encode(['success' => true, 'message' => 'Event deleted successfully']);
+        } else {
+            throw new Exception('Failed to delete event or you are not authorized');
+        }
     }
 }
 
@@ -210,19 +240,35 @@ function handleGetParticipants($db, $input) {
         throw new Exception('Event ID is required');
     }
 
-    $organizer = new Organizer($db);
-    $organizer->id = $_SESSION['user_id'];
-    
-    if (!$organizer->getProfile()) {
-        throw new Exception('Organizer profile not found');
-    }
-
-    $participants = $organizer->viewParticipants($event_id);
-    
-    if($participants !== false) {
-        echo json_encode(['success' => true, 'participants' => $participants]);
+    // Handle admin access
+    if (isAdmin()) {
+        require_once '../classes/Admin.php';
+        $admin = new Admin($db);
+        $admin->id = $_SESSION['user_id'];
+        
+        $participants = $admin->getEventParticipants($event_id);
+        
+        if($participants !== false) {
+            echo json_encode(['success' => true, 'participants' => $participants]);
+        } else {
+            throw new Exception('Failed to load participants');
+        }
     } else {
-        throw new Exception('Failed to load participants or you are not authorized');
+        // Handle organizer access
+        $organizer = new Organizer($db);
+        $organizer->id = $_SESSION['user_id'];
+        
+        if (!$organizer->getProfile()) {
+            throw new Exception('Organizer profile not found');
+        }
+
+        $participants = $organizer->viewParticipants($event_id);
+        
+        if($participants !== false) {
+            echo json_encode(['success' => true, 'participants' => $participants]);
+        } else {
+            throw new Exception('Failed to load participants or you are not authorized');
+        }
     }
 }
 

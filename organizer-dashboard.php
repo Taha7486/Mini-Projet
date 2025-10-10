@@ -1,20 +1,34 @@
 <?php
 require_once 'config/database.php';
 require_once 'classes/Organizer.php';
+require_once 'classes/Admin.php';
 require_once 'classes/Club.php';
 require_once 'includes/session.php';
 
-requireOrganizer();
+// Allow both organizers and admins
+if (!isOrganizer() && !isAdmin()) {
+    header('Location: login.php');
+    exit();
+}
 
 $database = new Database();
 $db = $database->getConnection();
 
-$organizer = new Organizer($db);
-$organizer->id = $_SESSION['user_id'];
-$organizer->getProfile();
-
-$myEvents = $organizer->getMyEvents();
-$myClubs = $organizer->getManagedClubs();
+// Get events based on user role
+if (isAdmin()) {
+    // Admins see all events
+    $admin = new Admin($db);
+    $admin->id = $_SESSION['user_id'];
+    $myEvents = $admin->getAllEvents();
+    $myClubs = []; // Admins don't need managed clubs for this view
+} else {
+    // Organizers see only their events
+    $organizer = new Organizer($db);
+    $organizer->id = $_SESSION['user_id'];
+    $organizer->getProfile();
+    $myEvents = $organizer->getMyEvents();
+    $myClubs = $organizer->getManagedClubs();
+}
 
 $club = new Club($db);
 $allClubs = $club->getAll();
@@ -24,7 +38,7 @@ $allClubs = $club->getAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Events - Campus Events</title>
+    <title><?= isAdmin() ? 'Manage All Events' : 'Manage Events' ?> - Campus Events</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -35,7 +49,7 @@ $allClubs = $club->getAll();
     <main class="container mx-auto px-12 py-8 flex-1"">
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h2 class="text-xl font-semibold">Your Events</h2>
+                <h2 class="text-xl font-semibold"><?= isAdmin() ? 'All Events' : 'Your Events' ?></h2>
                 <p class="text-gray-600"><?= count($myEvents) ?> <?= count($myEvents) === 1 ? 'event' : 'events' ?> total</p>
             </div>
             <?php if (!isAdmin()): ?>
@@ -48,8 +62,8 @@ $allClubs = $club->getAll();
         <?php if (empty($myEvents)): ?>
         <div class="text-center py-12 bg-white rounded-lg border-2 border-dashed">
             <i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
-            <h3 class="text-xl font-semibold mb-2">No events yet</h3>
-            <p class="text-gray-600 mb-4">Get started by creating your first event</p>
+            <h3 class="text-xl font-semibold mb-2"><?= isAdmin() ? 'No events in the system' : 'No events yet' ?></h3>
+            <p class="text-gray-600 mb-4"><?= isAdmin() ? 'No events have been created by organizers yet' : 'Get started by creating your first event' ?></p>
             <?php if (!isAdmin()): ?>
             <button onclick="openCreateDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
                 <i class="fas fa-plus mr-2"></i>Create Event
@@ -106,6 +120,8 @@ $allClubs = $club->getAll();
                             <button onclick="viewParticipants(<?= $event['event_id'] ?>)" class="w-full px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
                                 <i class="fas fa-users mr-1"></i>View Participants (<?= $event['registered_count'] ?>)
                             </button>
+                            <?php if (!isAdmin()): ?>
+                            <!-- Only organizers can send emails and certificates -->
                             <button onclick="openAttestationsModal(<?= $event['event_id'] ?>, '<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>')" class="w-full px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200">
                                 <i class="fas fa-graduation-cap mr-1"></i>Send Attestations
                             </button>
@@ -115,6 +131,7 @@ $allClubs = $club->getAll();
                             <button onclick="openEmailHistoryModal(<?= $event['event_id'] ?>, '<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>')" class="w-full px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200">
                                 <i class="fas fa-history mr-1"></i>Email History
                             </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

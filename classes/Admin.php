@@ -345,5 +345,66 @@ class Admin extends Account {
 
         return $stmt->execute();
     }
+
+    // Get all events
+    public function getAllEvents() {
+        $query = "SELECT e.*, c.nom as club_name,
+                  (SELECT COUNT(*) FROM registered WHERE event_id = e.event_id) as registered_count
+                  FROM events e
+                  INNER JOIN clubs c ON e.club_id = c.club_id
+                  ORDER BY e.date_event DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Update event
+    public function updateEvent($eventId, $title, $description, $dateEvent, $timeEvent, $location, $capacity, $imageUrl, $clubId) {
+        $query = "UPDATE events 
+                  SET title = :title, description = :description, date_event = :date_event, 
+                      time_event = :time_event, location = :location, capacity = :capacity, 
+                      image_url = :image_url, club_id = :club_id
+                  WHERE event_id = :event_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":title", $title);
+        $stmt->bindParam(":description", $description);
+        $stmt->bindParam(":date_event", $dateEvent);
+        $stmt->bindParam(":time_event", $timeEvent);
+        $stmt->bindParam(":location", $location);
+        $stmt->bindParam(":capacity", $capacity);
+        $stmt->bindParam(":image_url", $imageUrl);
+        $stmt->bindParam(":club_id", $clubId);
+        $stmt->bindParam(":event_id", $eventId);
+
+        return $stmt->execute();
+    }
+
+    // Delete event
+    public function deleteEvent($eventId) {
+        $query = "DELETE FROM events WHERE event_id = :event_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":event_id", $eventId);
+        return $stmt->execute();
+    }
+
+    // Get event participants
+    public function getEventParticipants($eventId) {
+        $query = "SELECT p.participant_id, a.nom, a.email, p.student_id, p.department, p.year,
+                  r.registered_at
+                  FROM registered r
+                  INNER JOIN participants p ON r.participant_id = p.participant_id
+                  INNER JOIN accounts a ON p.account_id = a.id
+                  WHERE r.event_id = :event_id
+                  ORDER BY r.registered_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":event_id", $eventId);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

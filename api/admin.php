@@ -276,6 +276,92 @@ try {
             echo json_encode(['success' => true, 'message' => "User {$statusText} successfully"]);
             break;
 
+        case 'update_event':
+            // Only admins can update events
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $eventId = $input['event_id'] ?? null;
+            $title = trim($input['title'] ?? '');
+            $description = trim($input['description'] ?? '');
+            $dateEvent = $input['date_event'] ?? '';
+            $timeEvent = trim($input['time_event'] ?? '');
+            $location = trim($input['location'] ?? '');
+            $capacity = (int)($input['capacity'] ?? 0);
+            $imageUrl = trim($input['image_url'] ?? '');
+            $clubId = $input['club_id'] ?? null;
+
+            if (!$eventId || empty($title) || empty($description) || empty($dateEvent) || 
+                empty($timeEvent) || empty($location) || $capacity <= 0 || 
+                empty($imageUrl) || !$clubId) {
+                throw new Exception('All fields are required');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            $success = $admin->updateEvent($eventId, $title, $description, $dateEvent, 
+                                        $timeEvent, $location, $capacity, $imageUrl, $clubId);
+            if (!$success) {
+                throw new Exception('Failed to update event');
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Event updated successfully']);
+            break;
+
+        case 'delete_event':
+            // Only admins can delete events
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $eventId = $input['event_id'] ?? null;
+            if (!$eventId) {
+                throw new Exception('Event ID is required');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            $success = $admin->deleteEvent($eventId);
+            if (!$success) {
+                throw new Exception('Failed to delete event');
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Event deleted successfully']);
+            break;
+
+        case 'get_event_participants':
+            // Only admins can view event participants
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $eventId = $input['event_id'] ?? null;
+            if (!$eventId) {
+                throw new Exception('Event ID is required');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            $participants = $admin->getEventParticipants($eventId);
+            
+            // Get event title for display
+            $eventQuery = "SELECT title FROM events WHERE event_id = :event_id";
+            $eventStmt = $db->prepare($eventQuery);
+            $eventStmt->bindParam(':event_id', $eventId);
+            $eventStmt->execute();
+            $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
+            
+            echo json_encode([
+                'success' => true, 
+                'participants' => $participants,
+                'event_title' => $event['title'] ?? 'Unknown Event'
+            ]);
+            break;
+
         default:
             throw new Exception('Invalid action');
     }
