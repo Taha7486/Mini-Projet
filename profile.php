@@ -60,7 +60,7 @@ $requests = $participant->getOrganizerRequests();
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-semibold">Profile Information</h2>
                     <span class="px-3 py-1 rounded-full text-sm font-medium <?= $participant->role === 'organizer' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800' ?>">
-                        <?= ucfirst($participant->role) ?>
+                        <?= ucfirst($participant->role ?? 'user') ?>
                     </span>
                 </div>
 
@@ -69,7 +69,7 @@ $requests = $participant->getOrganizerRequests();
                         <i class="fas fa-user text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Full Name</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->nom) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->nom ?? 'Not provided') ?></p>
                         </div>
                     </div>
 
@@ -77,7 +77,7 @@ $requests = $participant->getOrganizerRequests();
                         <i class="fas fa-envelope text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Email</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->email) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->email ?? 'Not provided') ?></p>
                         </div>
                     </div>
 
@@ -85,7 +85,7 @@ $requests = $participant->getOrganizerRequests();
                         <i class="fas fa-id-card text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Student ID</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->student_id) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->student_id ?? 'Not provided') ?></p>
                         </div>
                     </div>
 
@@ -101,7 +101,7 @@ $requests = $participant->getOrganizerRequests();
                         <i class="fas fa-building text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Department</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->department) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->department ?? 'Not provided') ?></p>
                         </div>
                     </div>
 
@@ -109,7 +109,7 @@ $requests = $participant->getOrganizerRequests();
                         <i class="fas fa-phone text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Phone Number</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->phone_number) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->phone_number ?? 'Not provided') ?></p>
                         </div>
                     </div>
                 </div>
@@ -188,7 +188,7 @@ $requests = $participant->getOrganizerRequests();
                             <span class="px-3 py-1 rounded-full text-sm font-medium 
                                 <?= $request['status'] === 'approved' ? 'bg-green-100 text-green-800' : 
                                    ($request['status'] === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') ?>">
-                                <?= ucfirst($request['status']) ?>
+                                <?= ucfirst($request['status'] ?? 'pending') ?>
                             </span>
                         </div>
                     </div>
