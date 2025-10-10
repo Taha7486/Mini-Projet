@@ -33,8 +33,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
-$action = $input['action'] ?? '';
+// Handle both JSON and FormData requests
+$input = [];
+$action = '';
+
+if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $action = $input['action'] ?? '';
+} else {
+    // Handle FormData (for file uploads)
+    $input = $_POST;
+    $action = $_POST['action'] ?? '';
+}
 
 try {
     switch($action) {
@@ -89,7 +99,6 @@ function handleCreateEvent($db, $input) {
     $date_event = $input['date_event'] ?? '';
     $time_event = $input['time_event'] ?? '';
     $capacity = intval($input['capacity'] ?? 0);
-    $image_url = trim($input['image_url'] ?? '');
     $club_id = intval($input['club_id'] ?? 0);
 
     if(empty($title) || empty($description) || empty($location) || empty($date_event) || 
@@ -107,6 +116,37 @@ function handleCreateEvent($db, $input) {
     // Check if organizer manages this club
     if (!$organizer->isOrganizerForClub($organizer->participant_id, $club_id)) {
         throw new Exception('You are not authorized to create events for this club');
+    }
+
+    // Handle image upload
+    $image_url = 'storage/event_images/no_image_placeholder.png'; // Default fallback
+    if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = '../storage/event_images/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $file = $_FILES['event_image'];
+        $allowedTypes = ['image/jpeg', 'image/png'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (!in_array($file['type'], $allowedTypes)) {
+            throw new Exception('Invalid file type. Only JPG and PNG are allowed.');
+        }
+        
+        if ($file['size'] > $maxSize) {
+            throw new Exception('File too large. Maximum size is 5MB.');
+        }
+        
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'event_' . time() . '_' . uniqid() . '.' . $extension;
+        $filepath = $uploadDir . $filename;
+        
+        if (move_uploaded_file($file['tmp_name'], $filepath)) {
+            $image_url = 'storage/event_images/' . $filename;
+        } else {
+            throw new Exception('Failed to upload image.');
+        }
     }
 
     $eventData = [
@@ -140,12 +180,42 @@ function handleUpdateEvent($db, $input) {
     $date_event = $input['date_event'] ?? '';
     $time_event = $input['time_event'] ?? '';
     $capacity = intval($input['capacity'] ?? 0);
-    $image_url = trim($input['image_url'] ?? '');
     $club_id = intval($input['club_id'] ?? 0);
 
     if($event_id <= 0 || empty($title) || empty($description) || empty($location) || 
        empty($date_event) || empty($time_event) || $capacity <= 0 || $club_id <= 0) {
         throw new Exception('All fields are required');
+    }
+
+    // Handle image upload for updates
+    $image_url = $input['image_url'] ?? 'default'; // Keep existing image by default
+    if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = '../storage/event_images/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $file = $_FILES['event_image'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (!in_array($file['type'], $allowedTypes)) {
+            throw new Exception('Invalid file type. Only JPG, PNG, GIF, and WebP are allowed.');
+        }
+        
+        if ($file['size'] > $maxSize) {
+            throw new Exception('File too large. Maximum size is 5MB.');
+        }
+        
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'event_' . time() . '_' . uniqid() . '.' . $extension;
+        $filepath = $uploadDir . $filename;
+        
+        if (move_uploaded_file($file['tmp_name'], $filepath)) {
+            $image_url = 'storage/event_images/' . $filename;
+        } else {
+            throw new Exception('Failed to upload image.');
+        }
     }
 
     // Handle admin access

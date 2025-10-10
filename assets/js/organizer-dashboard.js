@@ -26,7 +26,11 @@ function editEvent(event) {
     document.getElementById('location').value = event.location;
     document.getElementById('club_id').value = event.club_id;
     document.getElementById('capacity').value = event.capacity;
+    
+    // Handle image field - keep existing image URL in hidden field
     document.getElementById('image_url').value = event.image_url;
+    // Clear the file input for new uploads
+    document.getElementById('event_image').value = '';
     
     document.getElementById('eventModal').classList.remove('hidden');
 }
@@ -46,24 +50,13 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
     submitBtn.disabled = true;
     submitBtn.textContent = editMode ? 'Updating...' : 'Creating...';
     
-    const payload = {
-        action: editMode ? 'update' : 'create',
-        event_id: formData.get('event_id'),
-        title: formData.get('title'),
-        description: formData.get('description'),
-        date_event: formData.get('date_event'),
-        time_event: formData.get('time_event'),
-        location: formData.get('location'),
-        club_id: formData.get('club_id'),
-        capacity: parseInt(formData.get('capacity')),
-        image_url: formData.get('image_url')
-    };
+    // Add action to FormData
+    formData.append('action', editMode ? 'update' : 'create');
     
     try {
         const response = await fetch('api/events.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: formData // Send FormData instead of JSON for file uploads
         });
         
         const data = await response.json();

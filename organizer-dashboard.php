@@ -75,8 +75,15 @@ $allClubs = $club->getAll();
             <?php foreach ($myEvents as $event): ?>
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="relative h-48 bg-gray-200">
-                    <?php if ($event['image_url']): ?>
-                    <img src="<?= htmlspecialchars($event['image_url'] ?? '') ?>" alt="<?= htmlspecialchars($event['title'] ?? 'Event') ?>" class="w-full h-full object-cover">
+                    <?php if ($event['image_url'] && $event['image_url'] !== 'default'): ?>
+                    <img src="<?= htmlspecialchars($event['image_url']) ?>" alt="<?= htmlspecialchars($event['title'] ?? 'Event') ?>" class="w-full h-full object-cover">
+                    <?php else: ?>
+                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                        <div class="text-center">
+                            <i class="fas fa-calendar-alt text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500 text-sm">No Image</p>
+                        </div>
+                    </div>
                     <?php endif; ?>
                     <span class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
                         <?= htmlspecialchars($event['club_name'] ?? 'Unknown Club') ?>
@@ -197,8 +204,13 @@ $allClubs = $club->getAll();
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium mb-1">Image URL *</label>
-                            <input type="url" id="image_url" name="image_url" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black" placeholder="https://...">
+                            <label class="block text-sm font-medium mb-1">Event Image (Optional)</label>
+                            <div class="rounded-lg border-2 border-dashed border-gray-300 p-4 bg-white hover:bg-gray-50 transition">
+                                <input type="file" id="event_image" name="event_image" accept="image/*" 
+                                       class="block w-full text-sm text-gray-700 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-black file:text-white hover:file:bg-gray-800">
+                                <p class="mt-2 text-sm text-gray-500">Click to choose an image or drag and drop. JPG, PNG, GIF (Max 5MB)</p>
+                            </div>
+                            <input type="hidden" id="image_url" name="image_url" value="">
                         </div>
                     </div>
 
