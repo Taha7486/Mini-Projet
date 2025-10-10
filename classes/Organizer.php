@@ -57,12 +57,12 @@ class Organizer extends Participant {
     }
 
     // Modify event
-    public function modifyEvent($event_id, $eventData) {
+    public function modifyEvent($event_id, $eventData, $allowAnyOwner = false) {
         $query = "UPDATE events 
                   SET title=:title, description=:description, location=:location,
                       date_event=:date_event, time_event=:time_event, capacity=:capacity,
                       image_url=:image_url
-                  WHERE event_id=:event_id AND created_by=:created_by";
+                  WHERE event_id=:event_id" . ($allowAnyOwner ? "" : " AND created_by=:created_by");
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":event_id", $event_id);
@@ -73,7 +73,9 @@ class Organizer extends Participant {
         $stmt->bindParam(":time_event", $eventData['time_event']);
         $stmt->bindParam(":capacity", $eventData['capacity']);
         $stmt->bindParam(":image_url", $eventData['image_url']);
-        $stmt->bindParam(":created_by", $this->organizer_id);
+        if (!$allowAnyOwner) {
+            $stmt->bindParam(":created_by", $this->organizer_id);
+        }
 
         return $stmt->execute();
     }

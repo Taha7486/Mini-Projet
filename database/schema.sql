@@ -1,5 +1,6 @@
 -- Campus Events Management System Database Schema
 -- Drop existing tables if they exist
+DROP TABLE IF EXISTS pending_signups;
 DROP TABLE IF EXISTS attestations;
 DROP TABLE IF EXISTS registered;
 DROP TABLE IF EXISTS events;
@@ -124,6 +125,43 @@ CREATE TABLE attestations (
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (registration_id) REFERENCES registered(registration_id) ON DELETE CASCADE,
     UNIQUE KEY unique_attestation (registration_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Pending signups (awaiting email verification)
+CREATE TABLE pending_signups (
+	pending_id INT PRIMARY KEY AUTO_INCREMENT,
+	nom VARCHAR(100) NOT NULL,
+	email VARCHAR(100) NOT NULL,
+	student_id VARCHAR(50) NOT NULL,
+	year VARCHAR(20) NOT NULL,
+	department VARCHAR(100) DEFAULT '',
+	phone_number VARCHAR(20) NOT NULL,
+	password_hash VARCHAR(255) NOT NULL,
+	verify_token VARCHAR(64) NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	UNIQUE KEY unique_email (email),
+	INDEX idx_token (verify_token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Email history table (track all sent emails)
+CREATE TABLE email_history (
+    email_id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    organizer_id INT NOT NULL,
+    email_type ENUM('custom_email', 'attestation') NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    recipients_count INT NOT NULL DEFAULT 0,
+    sent_count INT NOT NULL DEFAULT 0,
+    failed_count INT NOT NULL DEFAULT 0,
+    attachments JSON NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE,
+    FOREIGN KEY (organizer_id) REFERENCES organizers(organizer_id) ON DELETE CASCADE,
+    INDEX idx_event (event_id),
+    INDEX idx_organizer (organizer_id),
+    INDEX idx_type (email_type),
+    INDEX idx_sent_at (sent_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert default admin account

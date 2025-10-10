@@ -189,6 +189,179 @@ try {
             echo json_encode(['success' => true, 'message' => 'User role updated successfully']);
             break;
 
+        case 'create_admin':
+            // Only admins can create other admins
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $nom = trim($input['nom'] ?? '');
+            $email = trim($input['email'] ?? '');
+            $password = $input['password'] ?? '';
+            
+            if (empty($nom) || empty($email) || empty($password)) {
+                throw new Exception('Name, email and password are required');
+            }
+
+            // Basic email validation
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new Exception('Invalid email');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+
+            $success = $admin->createAdmin($nom, $email, $password);
+            if (!$success) {
+                throw new Exception('Failed to create admin (email may already exist)');
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Admin created successfully']);
+            break;
+
+        case 'delete_user':
+            // Only admins can delete users
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $accountId = $input['account_id'] ?? null;
+            if (!$accountId) {
+                throw new Exception('Account ID is required');
+            }
+
+            // Prevent admin from deleting themselves
+            if ($accountId == $_SESSION['user_id']) {
+                throw new Exception('You cannot delete your own account');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            $success = $admin->deleteUser($accountId);
+            if (!$success) {
+                throw new Exception('Failed to delete user');
+            }
+
+            echo json_encode(['success' => true, 'message' => 'User deleted successfully']);
+            break;
+
+        case 'toggle_user_status':
+            // Only admins can toggle user status
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $accountId = $input['account_id'] ?? null;
+            $isActive = $input['is_active'] ?? null;
+
+            if (!$accountId || $isActive === null) {
+                throw new Exception('Account ID and status are required');
+            }
+
+            // Prevent admin from deactivating themselves
+            if ($accountId == $_SESSION['user_id'] && !$isActive) {
+                throw new Exception('You cannot deactivate your own account');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            $success = $admin->toggleUserStatus($accountId, $isActive);
+            if (!$success) {
+                throw new Exception('Failed to update user status');
+            }
+
+            $statusText = $isActive ? 'activated' : 'deactivated';
+            echo json_encode(['success' => true, 'message' => "User {$statusText} successfully"]);
+            break;
+
+        case 'update_event':
+            // Only admins can update events
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $eventId = $input['event_id'] ?? null;
+            $title = trim($input['title'] ?? '');
+            $description = trim($input['description'] ?? '');
+            $dateEvent = $input['date_event'] ?? '';
+            $timeEvent = trim($input['time_event'] ?? '');
+            $location = trim($input['location'] ?? '');
+            $capacity = (int)($input['capacity'] ?? 0);
+            $imageUrl = trim($input['image_url'] ?? '');
+            $clubId = $input['club_id'] ?? null;
+
+            if (!$eventId || empty($title) || empty($description) || empty($dateEvent) || 
+                empty($timeEvent) || empty($location) || $capacity <= 0 || 
+                empty($imageUrl) || !$clubId) {
+                throw new Exception('All fields are required');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            $success = $admin->updateEvent($eventId, $title, $description, $dateEvent, 
+                                        $timeEvent, $location, $capacity, $imageUrl, $clubId);
+            if (!$success) {
+                throw new Exception('Failed to update event');
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Event updated successfully']);
+            break;
+
+        case 'delete_event':
+            // Only admins can delete events
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $eventId = $input['event_id'] ?? null;
+            if (!$eventId) {
+                throw new Exception('Event ID is required');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            $success = $admin->deleteEvent($eventId);
+            if (!$success) {
+                throw new Exception('Failed to delete event');
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Event deleted successfully']);
+            break;
+
+        case 'get_event_participants':
+            // Only admins can view event participants
+            if (!isAdmin()) {
+                throw new Exception('Unauthorized');
+            }
+
+            $eventId = $input['event_id'] ?? null;
+            if (!$eventId) {
+                throw new Exception('Event ID is required');
+            }
+
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            $participants = $admin->getEventParticipants($eventId);
+            
+            // Get event title for display
+            $eventQuery = "SELECT title FROM events WHERE event_id = :event_id";
+            $eventStmt = $db->prepare($eventQuery);
+            $eventStmt->bindParam(':event_id', $eventId);
+            $eventStmt->execute();
+            $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
+            
+            echo json_encode([
+                'success' => true, 
+                'participants' => $participants,
+                'event_title' => $event['title'] ?? 'Unknown Event'
+            ]);
+            break;
+
         default:
             throw new Exception('Invalid action');
     }

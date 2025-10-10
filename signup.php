@@ -14,18 +14,13 @@ if(isLoggedIn()) {
     <title>Sign Up - Campus Events</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-4xl space-y-4">
-        <div class="text-center space-y-2">
-            <div class="flex items-center justify-center gap-2">
-                <i class="fas fa-calendar-alt text-3xl"></i>
-                <h1 class="text-3xl font-semibold">Campus Events</h1>
-            </div>
-            <p class="text-gray-600">Create your account</p>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6">
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <?php include 'includes/header.php'; ?>
+    
+    <div class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-md p-6 w-full max-w-xl lg:max-w-2xl">
             <h2 class="text-2xl font-semibold mb-2">Sign Up</h2>
             <p class="text-gray-600 mb-6">Fill in your details to create an account</p>
 
@@ -57,6 +52,13 @@ if(isLoggedIn()) {
                     </div>
 
                     <div>
+                        <label for="phone_number" class="block text-sm font-medium mb-1">Phone Number *</label>
+                        <input type="tel" id="phone_number" name="phone_number" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                               placeholder="+1 (555) 123-4567">
+                    </div>
+
+                    <div>
                         <label for="year" class="block text-sm font-medium mb-1">Year of Study *</label>
                         <select id="year" name="year" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
@@ -65,22 +67,28 @@ if(isLoggedIn()) {
                             <option value="2">2nd Year</option>
                             <option value="3">3rd Year</option>
                             <option value="4">4th Year</option>
+                            <option value="5">5th Year</option>
                             <option value="graduate">Graduate</option>
                         </select>
                     </div>
 
-                    <div>
+                    <div id="departmentWrapper">
                         <label for="department" class="block text-sm font-medium mb-1">Department *</label>
                         <input type="text" id="department" name="department" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="Computer Science">
+                               placeholder="Department">
                     </div>
 
-                    <div>
-                        <label for="phone_number" class="block text-sm font-medium mb-1">Phone Number *</label>
-                        <input type="tel" id="phone_number" name="phone_number" required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="+1 (555) 123-4567">
+                    <div id="filiereWrapper" class="hidden">
+                        <label for="filiere" class="block text-sm font-medium mb-1">Major *</label>
+                        <select id="filiere" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                            <option value="">Select Major</option>
+                            <option value="GI">GI</option>
+                            <option value="SCM">SCM</option>
+                            <option value="BDIA">BDIA</option>
+                            <option value="GM">GM</option>
+                            <option value="GSTR">GSTR</option>
+                        </select>
                     </div>
 
                     <div>
@@ -98,31 +106,9 @@ if(isLoggedIn()) {
                     </div>
                 </div>
 
-                <!-- CAPTCHA -->
+                <!-- hCaptcha -->
                 <div class="pt-4 border-t">
-                    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <input type="checkbox" id="captcha" name="captcha" required
-                                       class="w-5 h-5 cursor-pointer">
-                                <label for="captcha" class="cursor-pointer select-none">
-                                    I'm not a robot
-                                </label>
-                            </div>
-                            <div class="flex flex-col items-end gap-1">
-                                <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" 
-                                     alt="reCAPTCHA" class="h-10 w-10">
-                                <div class="flex flex-col items-end">
-                                    <span class="text-xs text-gray-600">reCAPTCHA</span>
-                                    <div class="flex gap-1 text-xs text-gray-500">
-                                        <a href="#" class="hover:underline">Privacy</a>
-                                        <span>-</span>
-                                        <a href="#" class="hover:underline">Terms</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="h-captcha" data-sitekey="1396d050-6650-4506-b164-48ac8fe4a3b0"></div>
                 </div>
 
                 <button type="submit" id="submitBtn"
@@ -145,11 +131,44 @@ if(isLoggedIn()) {
         </div>
     </div>
 
+    <!-- Footer -->
+    <?php include 'includes/footer.php'; ?>
+
     <script>
         const signupForm = document.getElementById('signupForm');
         const submitBtn = document.getElementById('submitBtn');
         const errorMessage = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
+
+        const yearSelect = document.getElementById('year');
+        const departmentWrapper = document.getElementById('departmentWrapper');
+        const departmentInput = document.getElementById('department');
+        const filiereWrapper = document.getElementById('filiereWrapper');
+        const filiereSelect = document.getElementById('filiere');
+
+        function updateFiliereVisibility() {
+            const y = yearSelect.value;
+            const needsFiliere = y === '3' || y === '4' || y === '5';
+            const needsDepartment = y === 'graduate';
+            
+            if (needsFiliere) {
+                filiereWrapper.classList.remove('hidden');
+                departmentWrapper.classList.add('hidden');
+                departmentInput.removeAttribute('required');
+            } else if (needsDepartment) {
+                filiereWrapper.classList.add('hidden');
+                departmentWrapper.classList.remove('hidden');
+                departmentInput.setAttribute('required', 'required');
+            } else {
+                // Years 1-2: hide both department and filiere
+                filiereWrapper.classList.add('hidden');
+                departmentWrapper.classList.add('hidden');
+                departmentInput.removeAttribute('required');
+            }
+        }
+
+        yearSelect.addEventListener('change', updateFiliereVisibility);
+        updateFiliereVisibility();
 
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -163,9 +182,10 @@ if(isLoggedIn()) {
                 return;
             }
 
-            // Validate CAPTCHA
-            if (!document.getElementById('captcha').checked) {
-                errorText.textContent = "Please verify that you're not a robot";
+            // Validate hCaptcha
+            const hToken = (document.querySelector('[name="h-captcha-response"]')?.value || '');
+            if (!hToken) {
+                errorText.textContent = "Please complete the captcha";
                 errorMessage.classList.remove('hidden');
                 return;
             }
@@ -174,15 +194,26 @@ if(isLoggedIn()) {
             submitBtn.textContent = 'Creating account...';
             errorMessage.classList.add('hidden');
 
+            // For years 3-5, send filiere value as department
+            // For years 1-2, send empty department
+            // For graduate, send department input
+            let effectiveDepartment = '';
+            if (yearSelect.value === '3' || yearSelect.value === '4' || yearSelect.value === '5') {
+                effectiveDepartment = filiereSelect.value || '';
+            } else if (yearSelect.value === 'graduate') {
+                effectiveDepartment = formData.get('department') || '';
+            }
+
             const payload = {
-                action: 'signup',
+                action: 'request_signup',
                 nom: formData.get('nom'),
                 email: formData.get('email'),
                 student_id: formData.get('student_id'),
                 year: formData.get('year'),
-                department: formData.get('department'),
+                department: effectiveDepartment,
                 phone_number: formData.get('phone_number'),
-                password: formData.get('password')
+                password: formData.get('password'),
+                hcaptcha_token: hToken
             };
 
             try {
@@ -197,8 +228,8 @@ if(isLoggedIn()) {
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Account created successfully!');
-                    window.location.href = 'index.php';
+                    alert('We sent you a verification link. Please check your email.');
+                    window.location.href = 'login.php';
                 } else {
                     errorText.textContent = data.message || 'Failed to create account';
                     errorMessage.classList.remove('hidden');

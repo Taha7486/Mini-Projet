@@ -154,7 +154,7 @@ class Admin extends Account {
     }
 
     // Create admin account
-    public function createAdmin($nom, $email, $password, $student_id, $year, $department, $phone_number) {
+    public function createAdmin($nom, $email, $password) {
         // Create account
         $account = new Account($this->conn);
         $account->nom = $nom;
@@ -189,24 +189,39 @@ class Admin extends Account {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Delete user
-    public function deleteUser($participant_id) {
-        // Get account_id
-        $query = "SELECT account_id FROM participants WHERE participant_id = :participant_id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":participant_id", $participant_id);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if($row) {
-            // Delete account (will cascade delete participant)
-            $deleteQuery = "DELETE FROM accounts WHERE id = :id";
-            $deleteStmt = $this->conn->prepare($deleteQuery);
-            $deleteStmt->bindParam(":id", $row['account_id']);
-            return $deleteStmt->execute();
+    // Delete user (by account_id)
+    public function deleteUser($account_id) {
+        // Check if it's an admin account
+        $adminQuery = "SELECT admin_id FROM admins WHERE account_id = :account_id";
+        $adminStmt = $this->conn->prepare($adminQuery);
+        $adminStmt->bindParam(":account_id", $account_id);
+        $adminStmt->execute();
+        
+        if ($adminStmt->rowCount() > 0) {
+            // Delete admin first, then account
+            $deleteAdminQuery = "DELETE FROM admins WHERE account_id = :account_id";
+            $deleteAdminStmt = $this->conn->prepare($deleteAdminQuery);
+            $deleteAdminStmt->bindParam(":account_id", $account_id);
+            $deleteAdminStmt->execute();
         }
+        
+        // Delete account (will cascade delete participant and other related records)
+        $deleteQuery = "DELETE FROM accounts WHERE id = :id";
+        $deleteStmt = $this->conn->prepare($deleteQuery);
+        $deleteStmt->bindParam(":id", $account_id);
+        return $deleteStmt->execute();
+    }
 
-        return false;
+    // Deactivate/Activate user account
+    public function toggleUserStatus($account_id, $is_active) {
+        // Add an 'active' column to accounts table if it doesn't exist
+        // For now, we'll use a simple approach by updating a status field
+        // This would require adding an 'active' column to the accounts table
+        $query = "UPDATE accounts SET active = :active WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":active", $is_active, PDO::PARAM_BOOL);
+        $stmt->bindParam(":id", $account_id);
+        return $stmt->execute();
     }
 
     // Get pending organizer requests
@@ -229,11 +244,24 @@ class Admin extends Account {
 
     // Get all users
     public function getAllUsers() {
-        $query = "SELECT p.participant_id, p.student_id, p.year, p.department, p.phone_number, p.role, p.created_at,
-                  a.id as account_id, a.nom, a.email
-                  FROM participants p
-                  INNER JOIN accounts a ON p.account_id = a.id
-                  ORDER BY p.created_at DESC";
+        // Return both participants and admins in a unified list
+        // If account is admin, role = 'admin' and participant fields may be NULL
+        $query = "SELECT 
+                    p.participant_id,
+                    p.student_id,
+                    p.year,
+                    p.department,
+                    p.phone_number,
+                    CASE WHEN ad.admin_id IS NOT NULL THEN 'admin' ELSE p.role END AS role,
+                    COALESCE(p.created_at, a.created_at) AS created_at,
+                    a.id AS account_id,
+                    a.nom,
+                    a.email
+                  FROM accounts a
+                  LEFT JOIN participants p ON p.account_id = a.id
+                  LEFT JOIN admins ad ON ad.account_id = a.id
+                  WHERE p.participant_id IS NOT NULL OR ad.admin_id IS NOT NULL
+                  ORDER BY created_at DESC";
 
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -271,6 +299,27 @@ class Admin extends Account {
         return $updateStmt->execute();
     }
 
+    // Get organizer request history
+    public function getOrganizerRequestHistory() {
+        $query = "SELECT r.*, p.student_id, p.department, p.year, p.phone_number,
+                  a.nom as user_name, a.email,
+                  c.nom as club_name,
+                  ad_acc.nom as decided_by_name
+                  FROM organizer_requests r
+                  INNER JOIN participants p ON r.participant_id = p.participant_id
+                  INNER JOIN accounts a ON p.account_id = a.id
+                  INNER JOIN clubs c ON r.club_id = c.club_id
+                  LEFT JOIN admins ad ON r.decided_by = ad.admin_id
+                  LEFT JOIN accounts ad_acc ON ad.account_id = ad_acc.id
+                  WHERE r.status != 'pending'
+                  ORDER BY r.decided_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Create organizer request
     public function createOrganizerRequest($participantId, $clubId) {
         // Check if request already exists for this participant and club
@@ -295,6 +344,67 @@ class Admin extends Account {
         $stmt->bindParam(":club_id", $clubId);
 
         return $stmt->execute();
+    }
+
+    // Get all events
+    public function getAllEvents() {
+        $query = "SELECT e.*, c.nom as club_name,
+                  (SELECT COUNT(*) FROM registered WHERE event_id = e.event_id) as registered_count
+                  FROM events e
+                  INNER JOIN clubs c ON e.club_id = c.club_id
+                  ORDER BY e.date_event DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Update event
+    public function updateEvent($eventId, $title, $description, $dateEvent, $timeEvent, $location, $capacity, $imageUrl, $clubId) {
+        $query = "UPDATE events 
+                  SET title = :title, description = :description, date_event = :date_event, 
+                      time_event = :time_event, location = :location, capacity = :capacity, 
+                      image_url = :image_url, club_id = :club_id
+                  WHERE event_id = :event_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":title", $title);
+        $stmt->bindParam(":description", $description);
+        $stmt->bindParam(":date_event", $dateEvent);
+        $stmt->bindParam(":time_event", $timeEvent);
+        $stmt->bindParam(":location", $location);
+        $stmt->bindParam(":capacity", $capacity);
+        $stmt->bindParam(":image_url", $imageUrl);
+        $stmt->bindParam(":club_id", $clubId);
+        $stmt->bindParam(":event_id", $eventId);
+
+        return $stmt->execute();
+    }
+
+    // Delete event
+    public function deleteEvent($eventId) {
+        $query = "DELETE FROM events WHERE event_id = :event_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":event_id", $eventId);
+        return $stmt->execute();
+    }
+
+    // Get event participants
+    public function getEventParticipants($eventId) {
+        $query = "SELECT p.participant_id, a.nom, a.email, p.student_id, p.department, p.year,
+                  r.registered_at
+                  FROM registered r
+                  INNER JOIN participants p ON r.participant_id = p.participant_id
+                  INNER JOIN accounts a ON p.account_id = a.id
+                  WHERE r.event_id = :event_id
+                  ORDER BY r.registered_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":event_id", $eventId);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>

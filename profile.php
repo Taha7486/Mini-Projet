@@ -1,6 +1,7 @@
 <?php
 require_once 'config/database.php';
 require_once 'classes/Participant.php';
+require_once 'classes/Account.php';
 require_once 'classes/Club.php';
 require_once 'includes/session.php';
 
@@ -9,18 +10,38 @@ requireLogin();
 $database = new Database();
 $db = $database->getConnection();
 
-$participant = new Participant($db);
-$participant->id = $_SESSION['user_id'];
-if (!isAdmin()){
+// Load user data based on role
+if (isAdmin()) {
+    // For admins, load from account table
+    $account = new Account($db);
+    $account->id = $_SESSION['user_id'];
+    $account->getAccount();
+    
+    // Create a mock participant object for consistency
+    $participant = new stdClass();
+    $participant->nom = $account->nom;
+    $participant->email = $account->email;
+    $participant->role = 'admin';
+    $participant->student_id = null;
+    $participant->year = null;
+    $participant->department = null;
+    $participant->phone_number = null;
+    
+    $myClubs = [];
+    $requests = [];
+} else {
+    // For regular users, load from participant table
+    $participant = new Participant($db);
+    $participant->id = $_SESSION['user_id'];
     $participant->participant_id = $_SESSION['participant_id'];
+    $participant->getProfile();
+    
+    $myClubs = $participant->getClubs();
+    $requests = $participant->getOrganizerRequests();
 }
-$participant->getProfile();
 
 $club = new Club($db);
 $clubs = $club->getAll();
-
-$myClubs = $participant->getClubs();
-$requests = $participant->getOrganizerRequests();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,45 +52,32 @@ $requests = $participant->getOrganizerRequests();
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white border-b sticky top-0 z-10 shadow-sm">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-calendar-alt text-2xl"></i>
-                    <h1 class="text-2xl font-semibold">My Profile</h1>
-                </div>
-                <div class="flex items-center gap-2">
-                    <a href="index.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        <i class="fas fa-arrow-left mr-2"></i>Back to Events
-                    </a>
-                    <a href="api/auth.php?action=logout" class="px-4 py-2 text-gray-600 hover:text-gray-900">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <?php include 'includes/header.php'; ?>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
+    <main class="container mx-auto px-4 py-8 max-w-4xl flex-1">
         <div class="space-y-6">
             <!-- Profile Info Card -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-semibold">Profile Information</h2>
-                    <span class="px-3 py-1 rounded-full text-sm font-medium <?= $participant->role === 'organizer' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800' ?>">
-                        <?= ucfirst($participant->role) ?>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium 
+                        <?= $participant->role === 'organizer' ? 'bg-blue-100 text-blue-800' 
+                            : ($participant->role === 'admin' ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-gray-100 text-gray-800') ?>">
+                        <?= ucfirst($participant->role ?? 'user') ?>
                     </span>
                 </div>
 
+                <?php if (isAdmin()): ?>
+                <!-- Admin Profile - Only Name and Email -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-user text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Full Name</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->nom) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->nom ?? 'Not provided') ?></p>
                         </div>
                     </div>
 
@@ -77,7 +85,26 @@ $requests = $participant->getOrganizerRequests();
                         <i class="fas fa-envelope text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Email</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->email) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->email ?? 'Not provided') ?></p>
+                        </div>
+                    </div>
+                </div>
+                <?php else: ?>
+                <!-- Regular User Profile - All Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-user text-gray-400"></i>
+                        <div>
+                            <p class="text-sm text-gray-600">Full Name</p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->nom ?? 'Not provided') ?></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-envelope text-gray-400"></i>
+                        <div>
+                            <p class="text-sm text-gray-600">Email</p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->email ?? 'Not provided') ?></p>
                         </div>
                     </div>
 
@@ -85,7 +112,15 @@ $requests = $participant->getOrganizerRequests();
                         <i class="fas fa-id-card text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Student ID</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->student_id) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->student_id ?? 'Not provided') ?></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-phone text-gray-400"></i>
+                        <div>
+                            <p class="text-sm text-gray-600">Phone Number</p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->phone_number ?? 'Not provided') ?></p>
                         </div>
                     </div>
 
@@ -101,18 +136,11 @@ $requests = $participant->getOrganizerRequests();
                         <i class="fas fa-building text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Department</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->department) ?></p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-phone text-gray-400"></i>
-                        <div>
-                            <p class="text-sm text-gray-600">Phone Number</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->phone_number) ?></p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->department ?? 'Not provided') ?></p>
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <?php if ($participant->role === 'organizer' && !empty($myClubs)): ?>
                 <div class="mt-6 pt-6 border-t">
@@ -130,7 +158,7 @@ $requests = $participant->getOrganizerRequests();
 
             <!-- Become Organizer / Change Clubs -->
             <?php if ($participant->role === 'user' || $participant->role === 'organizer'): ?>
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <h2 class="text-xl font-semibold mb-2">
                     <?= $participant->role === 'user' ? 'Become an Organizer' : 'Request Club Change' ?>
                 </h2>
@@ -173,7 +201,7 @@ $requests = $participant->getOrganizerRequests();
 
             <!-- Organizer Requests History -->
             <?php if (!empty($requests)): ?>
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <h2 class="text-xl font-semibold mb-4">My Requests</h2>
                 <div class="space-y-3">
                     <?php foreach ($requests as $request): ?>
@@ -188,7 +216,7 @@ $requests = $participant->getOrganizerRequests();
                             <span class="px-3 py-1 rounded-full text-sm font-medium 
                                 <?= $request['status'] === 'approved' ? 'bg-green-100 text-green-800' : 
                                    ($request['status'] === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') ?>">
-                                <?= ucfirst($request['status']) ?>
+                                <?= ucfirst($request['status'] ?? 'pending') ?>
                             </span>
                         </div>
                     </div>
@@ -198,7 +226,7 @@ $requests = $participant->getOrganizerRequests();
             <?php endif; ?>
 
             <!-- Quick Actions -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
                 <div class="space-y-2">
                     <a href="index.php" class="block px-4 py-2 border rounded-lg hover:bg-gray-50">
@@ -218,6 +246,9 @@ $requests = $participant->getOrganizerRequests();
             </div>
         </div>
     </main>
+
+    <!-- Footer -->
+    <?php include 'includes/footer.php'; ?>
 
     <script>
         function showOrganizerForm() {
