@@ -16,15 +16,18 @@ if(isLoggedIn()) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-4xl space-y-4">
-        <div class="text-center space-y-2">
-            <div class="flex items-center justify-center gap-2">
-                <i class="fas fa-calendar-alt text-3xl"></i>
-                <h1 class="text-3xl font-semibold">Campus Events</h1>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <?php include 'includes/header.php'; ?>
+    
+    <div class="flex-1 flex items-center justify-center p-4">
+        <div class="w-full max-w-4xl space-y-4">
+            <div class="text-center space-y-2">
+                <div class="flex items-center justify-center gap-2">
+                    <i class="fas fa-calendar-alt text-3xl"></i>
+                    <h1 class="text-3xl font-semibold">Campus Events</h1>
+                </div>
+                <p class="text-gray-600">Create your account</p>
             </div>
-            <p class="text-gray-600">Create your account</p>
-        </div>
 
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-2xl font-semibold mb-2">Sign Up</h2>

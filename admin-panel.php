@@ -28,28 +28,7 @@ $allClubs = $admin->getAllClubs();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white border-b sticky top-0 z-10 shadow-sm">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-user-shield text-2xl"></i>
-                    <h1 class="text-2xl font-semibold">Admin Panel</h1>
-                </div>
-                <div class="flex items-center gap-2">
-                    <a href="index.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        <i class="fas fa-eye mr-2"></i>View Public Page
-                    </a>
-                    <a href="organizer-dashboard.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        <i class="fas fa-tasks mr-2"></i>Manage Events
-                    </a>
-                    <a href="api/auth.php?action=logout" class="px-4 py-2 text-gray-600 hover:text-gray-900">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <?php include 'includes/header.php'; ?>
 
     <!-- Tabs -->
     <div class="container mx-auto px-4 mt-6">

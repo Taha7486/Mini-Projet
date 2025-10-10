@@ -29,33 +29,7 @@ $allClubs = $club->getAll();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white border-b sticky top-0 z-10 shadow-sm">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-calendar-alt text-2xl"></i>
-                    <div>
-                        <h1 class="text-2xl font-semibold">Event Management</h1>
-                        <p class="text-gray-600 text-sm">Manage your events • Welcome, <?= htmlspecialchars($organizer->nom ?? 'Organizer') ?></p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <a href="index.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        <i class="fas fa-eye mr-2"></i>View Public Page
-                    </a>
-                    <?php if (isAdmin()): ?>
-                    <a href="admin-panel.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                        <i class="fas fa-user-shield mr-2"></i>Admin Panel
-                    </a>
-                    <?php endif; ?>
-                    <a href="api/auth.php?action=logout" class="px-4 py-2 text-gray-600 hover:text-gray-900">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <?php include 'includes/header.php'; ?>
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">

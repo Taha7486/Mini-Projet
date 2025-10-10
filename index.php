@@ -23,66 +23,29 @@ $clubs = $club->getAll();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white border-b sticky top-0 z-10 shadow-sm">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-calendar-alt text-2xl"></i>
-                        <div>
-                            <h1 class="text-2xl font-semibold">Campus Events</h1>
-                            <p class="text-gray-600 text-sm">Discover and register for upcoming events on campus</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <?php if (isLoggedIn()): ?>
-                            <a href="profile.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                                <i class="fas fa-user mr-2"></i>Profile
-                            </a>
-                            <?php if (isOrganizer() || isAdmin()): ?>
-                                <a href="organizer-dashboard.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                                    Manage Events
-                                </a>
-                            <?php endif; ?>
-                            <?php if (isAdmin()): ?>
-                                <a href="admin-panel.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
-                                    Admin Panel
-                                </a>
-                            <?php endif; ?>
-                            <a href="api/auth.php?action=logout" class="px-4 py-2 text-gray-600 hover:text-gray-900">
-                                Sign Out
-                            </a>
-                        <?php else: ?>
-                            <a href="login.php" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
-                                <i class="fas fa-sign-in-alt mr-2"></i>Login
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <!-- Search and Filter -->
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <div class="relative flex-1">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" 
-                               id="searchInput"
-                               placeholder="Search events..." 
-                               class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
-                    </div>
-                    <select id="clubFilter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
-                        <option value="all">All Clubs</option>
-                        <?php foreach ($clubs as $clubItem): ?>
-                            <option value="<?= $clubItem['club_id'] ?>"><?= htmlspecialchars($clubItem['nom']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+    <?php include 'includes/header.php'; ?>
+
+    <!-- Search and Filter Section -->
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" 
+                        id="searchInput"
+                        placeholder="Search events..." 
+                        class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
             </div>
+            <select id="clubFilter" class="min-w-[300px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                <option value="all">All Clubs</option>
+                <?php foreach ($clubs as $clubItem): ?>
+                    <option value="<?= $clubItem['club_id'] ?>"><?= htmlspecialchars($clubItem['nom']) ?></option>
+                <?php endforeach; ?>
+            </select>
         </div>
-    </header>
+    </div>
 
     <!-- Events Grid -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-6">
         <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <?php foreach ($events as $event): ?>
                 <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow event-card" 
@@ -152,9 +115,9 @@ $clubs = $club->getAll();
 
     <!-- Event Details Modal -->
     <div id="eventDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white w-full max-w-4xl rounded-lg overflow-hidden shadow-lg max-h-[90vh] overflow-y-auto">
+        <div class="bg-white w-full max-w-6xl rounded-lg overflow-hidden shadow-lg max-h-[90vh] overflow-y-auto">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+            <div class="flex items-center justify-between px-12 py-4 border-b bg-gray-50">
                 <div class="flex items-center gap-3">
                     <i class="fas fa-calendar-alt text-2xl text-gray-600"></i>
                     <h3 id="detailTitle" class="text-2xl font-bold text-gray-800">Event Details</h3>
@@ -165,7 +128,7 @@ $clubs = $club->getAll();
             </div>
 
             <!-- Modal Content -->
-            <div class="p-6 space-y-6">
+            <div class="px-12 py-4 space-y-6">
                 <!-- Event Image and Club -->
                 <div id="detailImageWrapper" class="relative h-64 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg overflow-hidden hidden">
                     <img id="detailImage" src="" alt="Event image" class="w-full h-full object-cover">
@@ -292,7 +255,7 @@ $clubs = $club->getAll();
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
+            <div class="px-12 py-4 border-t bg-gray-50 flex items-center justify-between">
                 <div class="text-sm text-gray-500">
                     <i class="fas fa-info-circle mr-1"></i>
                     Click outside the modal or press ESC to close
