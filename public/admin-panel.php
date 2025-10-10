@@ -1,8 +1,8 @@
 <?php
-require_once 'config/database.php';
-require_once 'classes/Admin.php';
-require_once 'classes/Club.php';
-require_once 'includes/session.php';
+require_once '../config/database.php';
+require_once '../classes/Admin.php';
+require_once '../classes/Club.php';
+require_once '../includes/session.php';
 
 requireAdmin();
 
@@ -28,7 +28,7 @@ $allClubs = $admin->getAllClubs();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-    <?php include 'includes/header.php'; ?>
+    <?php include '../includes/header.php'; ?>
 
     <!-- Tabs -->
     <div class="container mx-auto px-12 mt-6">
@@ -420,7 +420,7 @@ $allClubs = $admin->getAllClubs();
     </div>
 
     <!-- Footer -->
-    <?php include 'includes/footer.php'; ?>
-    <script src="assets/js/admin-panel.js"></script>
+    <?php include '../includes/footer.php'; ?>
+    <script src="../assets/js/admin-panel.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 <?php
-require_once 'includes/session.php';
+require_once '../includes/session.php';
 
 if(isLoggedIn()) {
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit();
 }
 ?>
@@ -17,7 +17,7 @@ if(isLoggedIn()) {
     <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-    <?php include 'includes/header.php'; ?>
+    <?php include '../includes/header.php'; ?>
     
     <div class="flex-1 flex items-center justify-center p-4">
         <div class="w-full max-w-md space-y-4">
@@ -61,7 +61,7 @@ if(isLoggedIn()) {
                 </div>
 
                 <div class="mt-4 text-center">
-                    <a href="index.php" class="text-gray-600 hover:text-gray-900">
+                    <a href="../index.php" class="text-gray-600 hover:text-gray-900">
                         <i class="fas fa-arrow-left mr-1"></i>Back to Events
                     </a>
                 </div>
@@ -70,7 +70,7 @@ if(isLoggedIn()) {
     </div>
 
     <!-- Footer -->
-    <?php include 'includes/footer.php'; ?>
+    <?php include '../includes/footer.php'; ?>
 
     <script>
         const loginForm = document.getElementById('loginForm');
@@ -93,7 +93,7 @@ if(isLoggedIn()) {
             };
 
             try {
-                const response = await fetch('api/auth.php', {
+                const response = await fetch('../api/auth.php', {
                     method: 'POST',
                     body: JSON.stringify({ ...payload, hcaptcha_token: (document.querySelector('[name="h-captcha-response"]')?.value || '') }),
                     headers: {
@@ -104,7 +104,7 @@ if(isLoggedIn()) {
                 const data = await response.json();
 
                 if (data.success) {
-                    window.location.href = 'index.php';
+                    window.location.href = '../index.php';
                 } else {
                     errorText.textContent = data.message || 'Invalid email or password';
                     errorMessage.classList.remove('hidden');

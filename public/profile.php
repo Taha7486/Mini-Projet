@@ -1,9 +1,9 @@
 <?php
-require_once 'config/database.php';
-require_once 'classes/Participant.php';
-require_once 'classes/Account.php';
-require_once 'classes/Club.php';
-require_once 'includes/session.php';
+require_once '../config/database.php';
+require_once '../classes/Participant.php';
+require_once '../classes/Account.php';
+require_once '../classes/Club.php';
+require_once '../includes/session.php';
 
 requireLogin();
 
@@ -53,7 +53,7 @@ $clubs = $club->getAll();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-    <?php include 'includes/header.php'; ?>
+    <?php include '../includes/header.php'; ?>
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8 max-w-4xl flex-1">
@@ -229,7 +229,7 @@ $clubs = $club->getAll();
             <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
                 <div class="space-y-2">
-                    <a href="index.php" class="block px-4 py-2 border rounded-lg hover:bg-gray-50">
+                    <a href="../index.php" class="block px-4 py-2 border rounded-lg hover:bg-gray-50">
                         <i class="fas fa-calendar-alt mr-2"></i>View All Events
                     </a>
                     <?php if (isOrganizer() || isAdmin()): ?>
@@ -248,7 +248,7 @@ $clubs = $club->getAll();
     </main>
 
     <!-- Footer -->
-    <?php include 'includes/footer.php'; ?>
+    <?php include '../includes/footer.php'; ?>
 
     <script>
         function showOrganizerForm() {
@@ -277,7 +277,7 @@ $clubs = $club->getAll();
             submitBtn.textContent = 'Submitting...';
 
             try {
-                const response = await fetch('api/admin.php', {
+                const response = await fetch('../api/admin.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

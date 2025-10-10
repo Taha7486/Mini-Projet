@@ -54,7 +54,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
     formData.append('action', editMode ? 'update' : 'create');
     
     try {
-        const response = await fetch('api/events.php', {
+        const response = await fetch('../api/events.php', {
             method: 'POST',
             body: formData // Send FormData instead of JSON for file uploads
         });
@@ -84,7 +84,7 @@ async function deleteEvent(eventId) {
     }
     
     try {
-        const response = await fetch('api/events.php', {
+        const response = await fetch('../api/events.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -112,7 +112,7 @@ async function viewParticipants(eventId) {
     currentEventId = eventId;
     
     try {
-        const response = await fetch('api/events.php', {
+        const response = await fetch('../api/events.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -177,7 +177,7 @@ async function openAttestationsModal(eventId, eventTitle) {
     document.getElementById('attestationsEventTitle').textContent = `Event: ${eventTitle}`;
     
     try {
-        const response = await fetch('api/events.php', {
+        const response = await fetch('../api/events.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -246,7 +246,7 @@ async function openEmailHistoryModal(eventId, eventTitle) {
     document.getElementById('emailHistoryEventTitle').textContent = `Event: ${eventTitle}`;
     
     try {
-        const response = await fetch('api/events.php', {
+        const response = await fetch('../api/events.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -389,7 +389,7 @@ async function sendSelectedAttestations() {
     sendBtn.textContent = 'Sending...';
 
     try {
-        const response = await fetch('api/events.php', {
+        const response = await fetch('../api/events.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -646,7 +646,7 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
                 progressText.textContent = Math.round(progress) + '%';
             }, 200);
             
-            const uploadResponse = await fetch('api/upload.php', {
+            const uploadResponse = await fetch('../api/upload.php', {
                 method: 'POST',
                 body: uploadFormData
             });
@@ -690,7 +690,7 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending email...';
         
         // Now send the email with uploaded file paths
-        const response = await fetch('api/events.php', {
+        const response = await fetch('../api/events.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

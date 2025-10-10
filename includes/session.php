@@ -28,7 +28,7 @@ function isUser() {
 // Require login
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: login.php');
+        header('Location: public/login.php');
         exit();
     }
 }

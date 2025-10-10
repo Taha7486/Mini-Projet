@@ -1,9 +1,9 @@
 <?php
-require_once 'config/database.php';
-require_once 'classes/Organizer.php';
-require_once 'classes/Admin.php';
-require_once 'classes/Club.php';
-require_once 'includes/session.php';
+require_once '../config/database.php';
+require_once '../classes/Organizer.php';
+require_once '../classes/Admin.php';
+require_once '../classes/Club.php';
+require_once '../includes/session.php';
 
 // Allow both organizers and admins
 if (!isOrganizer() && !isAdmin()) {
@@ -43,7 +43,7 @@ $allClubs = $club->getAll();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-    <?php include 'includes/header.php'; ?>
+    <?php include '../includes/header.php'; ?>
 
     <!-- Main Content -->
     <main class="container mx-auto px-12 py-8 flex-1"">
@@ -76,14 +76,21 @@ $allClubs = $club->getAll();
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="relative h-48 bg-gray-200">
                     <?php if ($event['image_url'] && $event['image_url'] !== 'default'): ?>
-                    <img src="<?= htmlspecialchars($event['image_url']) ?>" alt="<?= htmlspecialchars($event['title'] ?? 'Event') ?>" class="w-full h-full object-cover">
+                        <?php 
+                        // Fix image path for public directory
+                        $imagePath = $event['image_url'];
+                        if (strpos($imagePath, 'storage/') === 0 || strpos($imagePath, 'assets/') === 0) {
+                            $imagePath = '../' . $imagePath;
+                        }
+                        ?>
+                        <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($event['title'] ?? 'Event') ?>" class="w-full h-full object-cover">
                     <?php else: ?>
-                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                        <div class="text-center">
-                            <i class="fas fa-calendar-alt text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-500 text-sm">No Image</p>
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                            <div class="text-center">
+                                <i class="fas fa-calendar-alt text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-500 text-sm">No Image</p>
+                            </div>
                         </div>
-                    </div>
                     <?php endif; ?>
                     <span class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
                         <?= htmlspecialchars($event['club_name'] ?? 'Unknown Club') ?>
@@ -413,7 +420,7 @@ $allClubs = $club->getAll();
     </div>
     
     <!-- Footer -->
-    <?php include 'includes/footer.php'; ?>
-    <script src="assets/js/organizer-dashboard.js"></script>
+    <?php include '../includes/footer.php'; ?>
+    <script src="../assets/js/organizer-dashboard.js"></script>
 </body>
 </html>

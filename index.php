@@ -387,7 +387,7 @@ $clubs = $club->getAll();
         function registerForEvent(eventId) {
             <?php if (!isLoggedIn()): ?>
                 alert('Please login to register for events');
-                window.location.href = 'login.php';
+                window.location.href = 'public/login.php';
                 return;
             <?php endif; ?>
 

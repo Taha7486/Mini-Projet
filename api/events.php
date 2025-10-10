@@ -119,7 +119,7 @@ function handleCreateEvent($db, $input) {
     }
 
     // Handle image upload
-    $image_url = 'storage/event_images/no_image_placeholder.png'; // Default fallback
+    $image_url = 'assets/images/no_image_placeholder-white_background.png'; // Default fallback
     if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = '../storage/event_images/';
         if (!is_dir($uploadDir)) {

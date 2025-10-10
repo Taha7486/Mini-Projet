@@ -32,7 +32,7 @@ async function handleRequest(requestId, status) {
     }
     
     try {
-        const response = await fetch('api/admin.php', {
+        const response = await fetch('../api/admin.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -100,7 +100,7 @@ document.getElementById('clubForm').addEventListener('submit', async (e) => {
     };
     
     try {
-        const response = await fetch('api/admin.php', {
+        const response = await fetch('../api/admin.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -130,7 +130,7 @@ async function deleteClub(clubId) {
     }
     
     try {
-        const response = await fetch('api/admin.php', {
+        const response = await fetch('../api/admin.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -163,7 +163,7 @@ async function changeUserRole(accountId, currentRole) {
     }
     
     try {
-        const response = await fetch('api/admin.php', {
+        const response = await fetch('../api/admin.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -220,7 +220,7 @@ document.getElementById('addAdminForm')?.addEventListener('submit', async (e) =>
     };
 
     try {
-        const response = await fetch('api/admin.php', {
+        const response = await fetch('../api/admin.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -252,7 +252,7 @@ async function deleteUser(accountId, userName) {
     }
     
     try {
-        const response = await fetch('api/admin.php', {
+        const response = await fetch('../api/admin.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
