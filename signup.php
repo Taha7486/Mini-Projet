@@ -20,16 +20,7 @@ if(isLoggedIn()) {
     <?php include 'includes/header.php'; ?>
     
     <div class="flex-1 flex items-center justify-center p-4">
-        <div class="w-full max-w-4xl space-y-4">
-            <div class="text-center space-y-2">
-                <div class="flex items-center justify-center gap-2">
-                    <i class="fas fa-calendar-alt text-3xl"></i>
-                    <h1 class="text-3xl font-semibold">Campus Events</h1>
-                </div>
-                <p class="text-gray-600">Create your account</p>
-            </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-white rounded-lg shadow-md p-6 w-full max-w-xl lg:max-w-2xl">
             <h2 class="text-2xl font-semibold mb-2">Sign Up</h2>
             <p class="text-gray-600 mb-6">Fill in your details to create an account</p>
 
@@ -61,6 +52,13 @@ if(isLoggedIn()) {
                     </div>
 
                     <div>
+                        <label for="phone_number" class="block text-sm font-medium mb-1">Phone Number *</label>
+                        <input type="tel" id="phone_number" name="phone_number" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                               placeholder="+1 (555) 123-4567">
+                    </div>
+
+                    <div>
                         <label for="year" class="block text-sm font-medium mb-1">Year of Study *</label>
                         <select id="year" name="year" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
@@ -82,22 +80,15 @@ if(isLoggedIn()) {
                     </div>
 
                     <div id="filiereWrapper" class="hidden">
-                        <label for="filiere" class="block text-sm font-medium mb-1">Filière *</label>
+                        <label for="filiere" class="block text-sm font-medium mb-1">Major *</label>
                         <select id="filiere" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
-                            <option value="">Choose filière</option>
+                            <option value="">Select Major</option>
                             <option value="GI">GI</option>
                             <option value="SCM">SCM</option>
                             <option value="BDIA">BDIA</option>
                             <option value="GM">GM</option>
                             <option value="GSTR">GSTR</option>
                         </select>
-                    </div>
-
-                    <div>
-                        <label for="phone_number" class="block text-sm font-medium mb-1">Phone Number *</label>
-                        <input type="tel" id="phone_number" name="phone_number" required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="+1 (555) 123-4567">
                     </div>
 
                     <div>
@@ -139,6 +130,13 @@ if(isLoggedIn()) {
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="border-t mt-8 bg-white">
+        <div class="container mx-auto px-4 py-4 text-center">
+            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
+        </div>
+    </footer>
 
     <script>
         const signupForm = document.getElementById('signupForm');

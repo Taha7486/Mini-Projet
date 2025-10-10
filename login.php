@@ -21,14 +21,6 @@ if(isLoggedIn()) {
     
     <div class="flex-1 flex items-center justify-center p-4">
         <div class="w-full max-w-md space-y-4">
-            <div class="text-center space-y-2">
-                <div class="flex items-center justify-center gap-2">
-                    <i class="fas fa-calendar-alt text-3xl"></i>
-                    <h1 class="text-3xl font-semibold">Campus Events</h1>
-                </div>
-                <p class="text-gray-600">Sign in to your account</p>
-            </div>
-
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-2xl font-semibold mb-2">Sign In</h2>
                 <p class="text-gray-600 mb-6">Enter your credentials to continue</p>
@@ -76,6 +68,13 @@ if(isLoggedIn()) {
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="border-t mt-8 bg-white">
+        <div class="container mx-auto px-4 py-4 text-center">
+            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
+        </div>
+    </footer>
 
     <script>
         const loginForm = document.getElementById('loginForm');

@@ -31,11 +31,11 @@ $requests = $participant->getOrganizerRequests();
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <?php include 'includes/header.php'; ?>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
+    <main class="container mx-auto px-4 py-8 max-w-4xl flex-1">
         <div class="space-y-6">
             <!-- Profile Info Card -->
             <div class="bg-white rounded-lg shadow-md p-6">
@@ -200,6 +200,13 @@ $requests = $participant->getOrganizerRequests();
             </div>
         </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="border-t mt-8 bg-white">
+        <div class="container mx-auto px-4 py-4 text-center">
+            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
+        </div>
+    </footer>
 
     <script>
         function showOrganizerForm() {

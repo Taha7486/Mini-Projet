@@ -22,11 +22,11 @@ $clubs = $club->getAll();
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <?php include 'includes/header.php'; ?>
 
     <!-- Search and Filter Section -->
-    <div class="container mx-auto px-4 py-4">
+    <div class="container mx-auto px-12 py-4">
         <div class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
@@ -45,7 +45,7 @@ $clubs = $club->getAll();
     </div>
 
     <!-- Events Grid -->
-    <main class="container mx-auto px-4 py-6">
+    <main class="container mx-auto px-12 py-6 flex-1"">
         <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <?php foreach ($events as $event): ?>
                 <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow event-card" 
@@ -153,14 +153,14 @@ $clubs = $club->getAll();
                 <!-- Event Description -->
                 <div class="bg-gray-50 rounded-lg p-4">
                     <h5 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <i class="fas fa-info-circle text-blue-600"></i>
+                        <i class="fas fa-file-alt text-gray-600"></i>
                         Description
                     </h5>
                     <p id="detailDescription" class="text-gray-700 leading-relaxed"></p>
                 </div>
 
                 <!-- Event Details Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Date & Time -->
                     <div class="bg-blue-50 rounded-lg p-4">
                         <h5 class="text-lg font-semibold text-blue-800 mb-3 flex items-center gap-2">
@@ -214,43 +214,6 @@ $clubs = $club->getAll();
                             </div>
                         </div>
                     </div>
-
-                    <!-- Event Status -->
-                    <div class="bg-orange-50 rounded-lg p-4">
-                        <h5 class="text-lg font-semibold text-orange-800 mb-3 flex items-center gap-2">
-                            <i class="fas fa-info-circle text-orange-600"></i>
-                            Status
-                        </h5>
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-3">
-                                <span id="detailStatusIcon" class="text-2xl"></span>
-                                <span id="detailStatusText" class="font-semibold"></span>
-                            </div>
-                            <div id="detailStatusMessage" class="text-sm text-gray-600"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Information -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <h5 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <i class="fas fa-clipboard-list text-gray-600"></i>
-                        Additional Information
-                    </h5>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div class="flex items-center gap-2 text-gray-600">
-                            <i class="fas fa-hashtag"></i>
-                            <span>Event ID: <span id="detailEventId" class="font-mono font-semibold"></span></span>
-                        </div>
-                        <div class="flex items-center gap-2 text-gray-600">
-                            <i class="fas fa-building"></i>
-                            <span>Club ID: <span id="detailClubId" class="font-mono font-semibold"></span></span>
-                        </div>
-                        <div class="flex items-center gap-2 text-gray-600">
-                            <i class="fas fa-percentage"></i>
-                            <span>Fill Rate: <span id="detailFillRate" class="font-semibold"></span></span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -274,8 +237,8 @@ $clubs = $club->getAll();
 
     <!-- Footer -->
     <footer class="border-t mt-8 bg-white">
-        <div class="container mx-auto px-4 py-4 text-center">
-            <p class="text-gray-600 text-sm">&copy; 2025 Campus Events Management System</p>
+        <div class="container mx-auto px-12 py-4 text-center">
+            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
         </div>
     </footer>
 
@@ -389,33 +352,6 @@ $clubs = $club->getAll();
                 isAlmostFull ? 'bg-orange-500' : 
                 'bg-purple-500'
             }`;
-
-            // Update status
-            const statusIcon = document.getElementById('detailStatusIcon');
-            const statusText = document.getElementById('detailStatusText');
-            const statusMessage = document.getElementById('detailStatusMessage');
-            
-            if (isFull) {
-                statusIcon.innerHTML = '<i class="fas fa-times-circle text-red-500"></i>';
-                statusText.textContent = 'Event Full';
-                statusText.className = 'font-semibold text-red-600';
-                statusMessage.textContent = 'No more spots available for this event.';
-            } else if (isAlmostFull) {
-                statusIcon.innerHTML = '<i class="fas fa-exclamation-triangle text-orange-500"></i>';
-                statusText.textContent = 'Almost Full';
-                statusText.className = 'font-semibold text-orange-600';
-                statusMessage.textContent = 'Only a few spots left! Register quickly.';
-            } else {
-                statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
-                statusText.textContent = 'Available';
-                statusText.className = 'font-semibold text-green-600';
-                statusMessage.textContent = 'Registration is open for this event.';
-            }
-
-            // Update additional information
-            document.getElementById('detailEventId').textContent = id;
-            document.getElementById('detailClubId').textContent = clubId;
-            document.getElementById('detailFillRate').textContent = `${fillRate}%`;
 
             // Update register button
             detailRegisterBtn.disabled = isFull;

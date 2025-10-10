@@ -28,11 +28,11 @@ $allClubs = $club->getAll();
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <?php include 'includes/header.php'; ?>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-12 py-8 flex-1"">
         <div class="flex items-center justify-between mb-6">
             <div>
                 <h2 class="text-xl font-semibold">Your Events</h2>
@@ -380,7 +380,13 @@ $allClubs = $club->getAll();
             </div>
         </div>
     </div>
-
+    
+    <!-- Footer -->
+    <footer class="border-t mt-8 bg-white">
+        <div class="container mx-auto px-4 py-4 text-center">
+            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
+        </div>
+    </footer>
     <script src="assets/js/organizer-dashboard.js"></script>
 </body>
 </html>

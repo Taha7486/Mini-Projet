@@ -3,13 +3,13 @@
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 ?>
 <header class="bg-white border-b sticky top-0 z-10 shadow-sm">
-    <div class="container mx-auto px-5 py-5">
+    <div class="container mx-auto px-12 py-5">
         <div class="flex items-center justify-between">
             <!-- Logo and Navigation -->
             <div class="flex items-center gap-8">
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
-                    <img src="assets/images/logo.svg" alt="Campus Events Logo" class="h-16 w-48 object-contain">
+                    <img src="assets/images/logo.svg" alt="Campus Events Logo" class="h-16 w- object-contain">
                 </div>
                 
                 <!-- Navigation Links -->
