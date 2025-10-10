@@ -236,11 +236,7 @@ $clubs = $club->getAll();
     </div>
 
     <!-- Footer -->
-    <footer class="border-t mt-8 bg-white">
-        <div class="container mx-auto px-12 py-4 text-center">
-            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script>
         // Search and filter functionality

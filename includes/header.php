@@ -45,14 +45,14 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                         Profile
                     </a>
 
-                    <!-- Sign Out -->
+                    <!-- Log Out -->
                     <a href="api/auth.php?action=logout" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
-                        Sign Out
+                        Log Out
                     </a>
                 <?php else: ?>
-                    <!-- Sign In and Sign Up for non-logged users -->
+                    <!-- Log In and Sign Up for non-logged users -->
                     <a href="login.php" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
-                        Sign In
+                        Log in
                     </a>
                     <a href="signup.php" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
                         Sign Up

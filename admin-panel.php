@@ -34,7 +34,7 @@ $allClubs = $admin->getAllClubs();
     <div class="container mx-auto px-12 mt-6">
         <div class="bg-white rounded-lg shadow-sm p-2 flex gap-2">
             <button onclick="showTab('requests')" id="tab-requests" class="flex-1 px-4 py-2 rounded-lg bg-black text-white">
-                <i class="fas fa-user-clock mr-2"></i>Requests (<?= count($pendingRequests) + count($requestHistory) ?>)
+                <i class="fas fa-user-clock mr-2"></i>Requests (<?= count($pendingRequests) ?>)
             </button>
             <button onclick="showTab('clubs')" id="tab-clubs" class="flex-1 px-4 py-2 rounded-lg hover:bg-gray-100">
                 <i class="fas fa-users mr-2"></i>Clubs (<?= count($allClubs) ?>)
@@ -190,7 +190,10 @@ $allClubs = $admin->getAllClubs();
         <div id="content-clubs" class="tab-content hidden">
             <div class="bg-white rounded-lg shadow-md p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-semibold">Campus Clubs</h2>
+                    <div>
+                        <h2 class="text-xl font-semibold mb-1">Campus Clubs</h2>
+                        <p class="text-gray-600 mb-4">View and manage clubs and their organizers</p>
+                    </div>
                     <button onclick="openCreateClubDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
                         <i class="fas fa-plus mr-2"></i>Create Club
                     </button>
@@ -258,7 +261,8 @@ $allClubs = $admin->getAllClubs();
         <!-- Users Tab -->
         <div id="content-users" class="tab-content hidden">
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">System Users</h2>
+                <h2 class="text-xl font-semibold mb-1">System Users</h2>
+                <p class="text-gray-600 mb-4">Review all users, change roles, or remove accounts</p>
                 
                 <div class="overflow-x-auto">
                     <table class="w-full">
@@ -418,11 +422,7 @@ $allClubs = $admin->getAllClubs();
     </div>
 
     <!-- Footer -->
-    <footer class="border-t mt-8 bg-white">
-        <div class="container mx-auto px-4 py-4 text-center">
-            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
     <script src="assets/js/admin-panel.js"></script>
 </body>
 </html>

@@ -321,8 +321,8 @@ $allClubs = $club->getAll();
                                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   placeholder="Enter your message here. You can use placeholders: {name}, {event_title}, {event_date}, {event_time}, {event_location}"></textarea>
                         <div class="mt-2 text-sm text-gray-600">
-                            <p><strong>Available placeholders:</strong></p>
-                            <ul class="list-disc list-inside space-y-1">
+                            <p class="mb-1"><strong>Available placeholders:</strong></p>
+                            <ul class="grid grid-cols-2 gap-x-4 list-disc list-inside">
                                 <li><code>{name}</code> - Participant's name</li>
                                 <li><code>{event_title}</code> - Event title</li>
                                 <li><code>{event_date}</code> - Event date</li>
@@ -335,10 +335,12 @@ $allClubs = $club->getAll();
                     <!-- File Attachments -->
                     <div>
                         <label for="emailAttachments" class="block text-sm font-medium mb-2">Attachments (Optional)</label>
-                        <input type="file" id="emailAttachments" name="attachments[]" multiple 
-                               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <p class="mt-1 text-sm text-gray-500">You can select multiple files. Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB each)</p>
+                        <div class="rounded-lg border-2 border-dashed border-gray-300 p-4 bg-white hover:bg-gray-50 transition">
+                            <input type="file" id="emailAttachments" name="attachments[]" multiple 
+                                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                                   class="block w-full text-sm text-gray-700 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-black file:text-white hover:file:bg-gray-800">
+                            <p class="mt-2 text-sm text-gray-500">Click to choose files or drop them here. PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB each)</p>
+                        </div>
                         
                         <!-- File list display -->
                         <div id="selectedFiles" class="mt-2 hidden">
@@ -382,11 +384,7 @@ $allClubs = $club->getAll();
     </div>
     
     <!-- Footer -->
-    <footer class="border-t mt-8 bg-white">
-        <div class="container mx-auto px-4 py-4 text-center">
-            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
     <script src="assets/js/organizer-dashboard.js"></script>
 </body>
 </html>

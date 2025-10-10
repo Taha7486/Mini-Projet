@@ -59,7 +59,7 @@ $clubs = $club->getAll();
     <main class="container mx-auto px-4 py-8 max-w-4xl flex-1">
         <div class="space-y-6">
             <!-- Profile Info Card -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-semibold">Profile Information</h2>
                     <span class="px-3 py-1 rounded-full text-sm font-medium 
@@ -117,6 +117,14 @@ $clubs = $club->getAll();
                     </div>
 
                     <div class="flex items-center gap-3">
+                        <i class="fas fa-phone text-gray-400"></i>
+                        <div>
+                            <p class="text-sm text-gray-600">Phone Number</p>
+                            <p class="font-medium"><?= htmlspecialchars($participant->phone_number ?? 'Not provided') ?></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
                         <i class="fas fa-graduation-cap text-gray-400"></i>
                         <div>
                             <p class="text-sm text-gray-600">Year of Study</p>
@@ -129,14 +137,6 @@ $clubs = $club->getAll();
                         <div>
                             <p class="text-sm text-gray-600">Department</p>
                             <p class="font-medium"><?= htmlspecialchars($participant->department ?? 'Not provided') ?></p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-phone text-gray-400"></i>
-                        <div>
-                            <p class="text-sm text-gray-600">Phone Number</p>
-                            <p class="font-medium"><?= htmlspecialchars($participant->phone_number ?? 'Not provided') ?></p>
                         </div>
                     </div>
                 </div>
@@ -158,7 +158,7 @@ $clubs = $club->getAll();
 
             <!-- Become Organizer / Change Clubs -->
             <?php if ($participant->role === 'user' || $participant->role === 'organizer'): ?>
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <h2 class="text-xl font-semibold mb-2">
                     <?= $participant->role === 'user' ? 'Become an Organizer' : 'Request Club Change' ?>
                 </h2>
@@ -201,7 +201,7 @@ $clubs = $club->getAll();
 
             <!-- Organizer Requests History -->
             <?php if (!empty($requests)): ?>
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <h2 class="text-xl font-semibold mb-4">My Requests</h2>
                 <div class="space-y-3">
                     <?php foreach ($requests as $request): ?>
@@ -226,7 +226,7 @@ $clubs = $club->getAll();
             <?php endif; ?>
 
             <!-- Quick Actions -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-10 py-6">
                 <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
                 <div class="space-y-2">
                     <a href="index.php" class="block px-4 py-2 border rounded-lg hover:bg-gray-50">
@@ -248,11 +248,7 @@ $clubs = $club->getAll();
     </main>
 
     <!-- Footer -->
-    <footer class="border-t mt-8 bg-white">
-        <div class="container mx-auto px-4 py-4 text-center">
-            <p class="text-gray-600 text-sm">&copy; 2025 EventsHub - Campus Events Management System</p>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script>
         function showOrganizerForm() {
