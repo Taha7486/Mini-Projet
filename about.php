@@ -14,10 +14,10 @@ require_once 'includes/session.php';
     <?php include 'includes/header.php'; ?>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 max-w-4xl flex-1">
+    <main class="container mx-auto px-4 py-8 max-w-5xl flex-1">
         <div class="space-y-8">
             <!-- Mission Section -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-12 py-6">
                 <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
                     Our Mission
                 </h2>
@@ -29,7 +29,7 @@ require_once 'includes/session.php';
             </div>
 
             <!-- Features Section -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-12 py-6">
                 <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
                     Key Features
                 </h2>
@@ -84,7 +84,7 @@ require_once 'includes/session.php';
             </div>
 
             <!-- How It Works Section -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-12 py-6">
                 <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
                     How It Works
                 </h2>
@@ -114,7 +114,7 @@ require_once 'includes/session.php';
             </div>
 
             <!-- Contact Section -->
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md px-12 py-6">
                 <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
                     <i class="fas fa-envelope text-gray-600"></i>
                     Contact Us

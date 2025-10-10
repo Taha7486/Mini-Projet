@@ -43,7 +43,7 @@ $allClubs = $admin->getAllClubs();
                 <i class="fas fa-user mr-2"></i>Users (<?= count($allUsers) ?>)
             </button>
             <button onclick="showTab('add-admin')" id="tab-add-admin" class="flex-1 px-4 py-2 rounded-lg hover:bg-gray-100">
-                <i class="fas fa-user-shield mr-2"></i>Add Admin
+                <i class="fas fa-user-shield mr-2"></i>Create Admin
             </button>
         </div>
     </div>
@@ -205,7 +205,6 @@ $allClubs = $admin->getAllClubs();
                             <div class="flex-1">
                                 <div class="flex items-center gap-4">
                                     <div class="flex items-center gap-2">
-                                        <i class="fas fa-users text-gray-400"></i>
                                         <h3 class="font-semibold text-lg"><?= htmlspecialchars($club['nom']) ?></h3>
                                     </div>
                                     
@@ -324,8 +323,9 @@ $allClubs = $admin->getAllClubs();
         
         <!-- Add Admin Tab -->
         <div id="content-add-admin" class="tab-content hidden">
+            <div class="max-w-5xl mx-auto">
                 <div class="bg-white rounded-lg shadow-md p-8">
-                    <h2 class="text-2xl font-semibold mb-2">Create Admin</h2>
+                    <h2 class="text-2xl font-semibold mb-2">Create Admin Account</h2>
                     <p class="text-gray-600 mb-6">Fill in the details to create a new administrator account</p>
 
                     <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -334,37 +334,47 @@ $allClubs = $admin->getAllClubs();
 
                     <form id="addAdminForm" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="nom" class="block text-sm font-medium mb-1">Full Name *</label>
-                            <input type="text" id="nom" name="nom" required 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                    placeholder="John Doe">
+                            <div>
+                                <label for="nom" class="block text-sm font-medium mb-1">Full Name *</label>
+                                <input type="text" id="nom" name="nom" required 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                        placeholder="John Doe">
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-medium mb-1">Email *</label>
+                                <input type="email" id="email" name="email" required 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                        placeholder="admin@campus.edu">
+                            </div>
                         </div>
 
-                        <div>
-                            <label for="email" class="block text-sm font-medium mb-1">Email *</label>
-                            <input type="email" id="email" name="email" required 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                    placeholder="admin@campus.edu">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="password" class="block text-sm font-medium mb-1">Password *</label>
+                                <input type="password" id="password" name="password" required 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                        placeholder="Enter a strong password">
+                            </div>
+
+                            <div>
+                                <label for="confirmPassword" class="block text-sm font-medium mb-1">Confirm Password *</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" required 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                        placeholder="Confirm your password">
+                            </div>
                         </div>
-                    </div>
 
-                    <div>
-                        <label for="password" class="block text-sm font-medium mb-1">Password *</label>
-                        <input type="password" id="password" name="password" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                placeholder="Enter a strong password">
-                    </div>
-
-                    <div class="flex gap-4 pt-4">
-                        <button type="reset" class="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
-                            Reset Form
-                        </button>
-                        <button id="addAdminSubmit" type="submit" class="flex-1 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-medium">
-                            Create Admin Account
-                        </button>
-                    </div>
-                </form>
+                        <div class="flex gap-4 pt-4">
+                            <button type="reset" class="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
+                                Reset Form
+                            </button>
+                            <button id="addAdminSubmit" type="submit" class="flex-1 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-medium">
+                                Create Admin Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
         

@@ -193,6 +193,21 @@ document.getElementById('addAdminForm')?.addEventListener('submit', async (e) =>
 
     const form = e.target;
     const submitBtn = document.getElementById('addAdminSubmit');
+    
+    // Validate password confirmation
+    const password = form.querySelector('#password').value;
+    const confirmPassword = form.querySelector('#confirmPassword').value;
+    
+    if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+    }
+    
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters long!');
+        return;
+    }
+    
     submitBtn.disabled = true;
     submitBtn.textContent = 'Creating...';
 
@@ -201,11 +216,7 @@ document.getElementById('addAdminForm')?.addEventListener('submit', async (e) =>
         action: 'create_admin',
         nom: formData.get('nom'),
         email: formData.get('email'),
-        password: formData.get('password'),
-        student_id: formData.get('student_id') || null,
-        year: formData.get('year') || null,
-        department: formData.get('department') || null,
-        phone_number: formData.get('phone_number') || null
+        password: formData.get('password')
     };
 
     try {

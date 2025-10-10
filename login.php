@@ -37,14 +37,14 @@ if(isLoggedIn()) {
                                placeholder="your.email@university.edu">
                     </div>
 
-
                     <div>
                         <label for="password" class="block text-sm font-medium mb-1">Password</label>
                         <input type="password" id="password" name="password" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                                placeholder="••••••••">
                     </div>
-                    <div>
+
+                    <div class="pt-4 border-t">
                         <div class="h-captcha" data-sitekey="1396d050-6650-4506-b164-48ac8fe4a3b0"></div>
                     </div>
 
