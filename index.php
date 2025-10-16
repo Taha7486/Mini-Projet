@@ -288,7 +288,8 @@ $clubs = $club->getAll();
             const title = card.dataset.eventTitle || '';
             const desc = card.dataset.eventDescription || '';
             const date = card.dataset.eventDate || '';
-            const time = card.dataset.eventTime || '';
+            const startTime = card.dataset.eventStartTime || '';
+            const endTime = card.dataset.eventEndTime || '';
             const location = card.dataset.eventLocation || '';
             const capacity = parseInt(card.dataset.eventCapacity || '0', 10);
             const registered = parseInt(card.dataset.eventRegistered || '0', 10);
@@ -329,10 +330,18 @@ $clubs = $club->getAll();
                 detailTitleText.textContent = title;
                 detailClubNameText.textContent = clubName;
             }
-
+            
+            function formatTime(timeStr) {
+                if (!timeStr) return '';
+                const [hours, minutes] = timeStr.split(':');
+                let h = parseInt(hours, 10);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12 || 12;
+                return `${h}:${minutes} ${ampm}`;
+            }
             // Update date and time
             document.getElementById('detailDate').textContent = formattedDate;
-            document.getElementById('detailTime').textContent = time;
+            document.getElementById('detailTime').textContent = `${formatTime(startTime)} - ${formatTime(endTime)}`;
 
             // Update location
             document.getElementById('detailLocation').textContent = location;
