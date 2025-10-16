@@ -34,7 +34,8 @@ if(isLoggedIn()) {
                         <label for="nom" class="block text-sm font-medium mb-1">Full Name *</label>
                         <input type="text" id="nom" name="nom" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="John Doe">
+                               placeholder="John Doe" pattern="[A-Za-zÀ-ÖØ-öø-ÿ ]+" title="Only letters and spaces are allowed">
+                        <p class="mt-1 text-xs text-gray-500">Only letters and spaces are allowed.</p>
                     </div>
 
                     <div>
@@ -46,9 +47,10 @@ if(isLoggedIn()) {
 
                     <div>
                         <label for="student_id" class="block text-sm font-medium mb-1">Student ID *</label>
-                        <input type="text" id="student_id" name="student_id" required
+                        <input type="text" id="student_id" name="student_id" required inputmode="numeric" maxlength="8" pattern="\d{8}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="2024001234">
+                               placeholder="12345678" title="Exactly 8 digits">
+                        <p class="mt-1 text-xs text-gray-500">Exactly 8 digits.</p>
                     </div>
 
                     <div>
@@ -95,7 +97,8 @@ if(isLoggedIn()) {
                         <label for="password" class="block text-sm font-medium mb-1">Password *</label>
                         <input type="password" id="password" name="password" required minlength="6"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="••••••••">
+                               placeholder="••••••••" title="Must contain at least one uppercase letter and one number">
+                        <p class="mt-1 text-xs text-gray-500">Must include at least one uppercase letter and one number.</p>
                     </div>
 
                     <div>

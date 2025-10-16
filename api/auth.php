@@ -165,6 +165,25 @@ function handleSignup($db, $input) {
         return;
     }
 
+    // Validation rules
+    $nameValid = (bool)preg_match('/^[A-Za-zÀ-ÖØ-öø-ÿ ]+$/u', $nom);
+    if (!$nameValid) {
+        echo json_encode(['success' => false, 'message' => 'Full name must contain only letters and spaces']);
+        return;
+    }
+
+    $studentIdValid = (bool)preg_match('/^\d{8}$/', $student_id);
+    if (!$studentIdValid) {
+        echo json_encode(['success' => false, 'message' => 'Student ID must be exactly 8 digits']);
+        return;
+    }
+
+    $passwordValid = (bool)preg_match('/^(?=.*[A-Z])(?=.*\d).+$/', $password);
+    if (!$passwordValid) {
+        echo json_encode(['success' => false, 'message' => 'Password must include at least one uppercase letter and one number']);
+        return;
+    }
+
     $participant = new Participant($db);
     
     if($participant->registerParticipant($nom, $email, $password, $student_id, $year, $department, $phone_number)) {
@@ -201,6 +220,25 @@ function handleRequestSignup($db, $input) {
     if(empty($nom) || empty($email) || empty($student_id) || empty($year) ||
        ($yearNeedsDepartment && empty($department)) || empty($phone_number) || empty($password)) {
         echo json_encode(['success' => false, 'message' => 'Please fill required fields']);
+        return;
+    }
+
+    // Validation rules
+    $nameValid = (bool)preg_match('/^[A-Za-zÀ-ÖØ-öø-ÿ ]+$/u', $nom);
+    if (!$nameValid) {
+        echo json_encode(['success' => false, 'message' => 'Full name must contain only letters and spaces']);
+        return;
+    }
+
+    $studentIdValid = (bool)preg_match('/^\d{8}$/', $student_id);
+    if (!$studentIdValid) {
+        echo json_encode(['success' => false, 'message' => 'Student ID must be exactly 8 digits']);
+        return;
+    }
+
+    $passwordValid = (bool)preg_match('/^(?=.*[A-Z])(?=.*\d).+$/', $password);
+    if (!$passwordValid) {
+        echo json_encode(['success' => false, 'message' => 'Password must include at least one uppercase letter and one number']);
         return;
     }
 
