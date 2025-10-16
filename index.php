@@ -18,7 +18,7 @@ $clubs = $club->getAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campus Events - Home</title>
+    <title>EventsHub - Campus Events</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -68,7 +68,7 @@ $clubs = $club->getAll();
                                  alt="<?= htmlspecialchars($event['title']) ?>"
                                  class="w-full h-full object-cover">
                         <?php endif; ?>
-                        <span class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
+                        <span onclick="event.stopPropagation();" class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
                             <?= htmlspecialchars($event['club_name']) ?>
                         </span>
                     </div>
