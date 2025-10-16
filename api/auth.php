@@ -194,6 +194,10 @@ function handleRequestSignup($db, $input) {
     $year = trim($input['year'] ?? '');
     $department = trim($input['department'] ?? '');
     $phone_number = trim($input['phone_number'] ?? '');
+    if (!preg_match('/^(\+212|0)[6-7][0-9]{8}$/', $phone_number)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
+    return;
+}
     $password = $input['password'] ?? '';
 
     $yearNeedsDepartment = ($year === 'graduate');
