@@ -122,6 +122,7 @@ $clubs = $club->getAll();
                         $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
                         $isCompleted = $now > $eventEnd;
                         ?>
+                        <?php if (!isAdmin()): ?>
                         <button onclick="event.stopPropagation(); registerForEvent(<?= $event['event_id'] ?>)" 
                                 class="w-full py-2 bg-black text-white rounded-lg hover:bg-gray-800 <?= ($spotsLeft == 0 || $isCompleted) ? 'opacity-50 cursor-not-allowed' : '' ?>"
                                 <?= ($spotsLeft == 0 || $isCompleted) ? 'disabled' : '' ?>>
@@ -135,6 +136,7 @@ $clubs = $club->getAll();
                             }
                             ?>
                         </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -262,9 +264,11 @@ $clubs = $club->getAll();
                     <button onclick="closeEventDetails()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         <i class="fas fa-times mr-2"></i>Close
                     </button>
+                    <?php if (!isAdmin()): ?>
                     <button id="detailRegisterBtn" class="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-user-plus mr-2"></i>Register Now
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -335,7 +339,7 @@ $clubs = $club->getAll();
             const fillRate = capacity > 0 ? Math.round((registered / capacity) * 100) : 0;
             const isFull = spotsLeft <= 0;
             const isAlmostFull = spotsLeft <= 5 && spotsLeft > 0;
-
+            
             // Check if event is completed
             const now = new Date();
             const eventEndDateTime = new Date(date + ' ' + endTime);
@@ -402,28 +406,30 @@ $clubs = $club->getAll();
                 'bg-purple-500'
             }`;
 
-            // Update register button
-            const isDisabled = isFull || isCompleted;
-            detailRegisterBtn.disabled = isDisabled;
-            
-            let buttonText = 'Register Now';
-            if (isCompleted) {
-                buttonText = 'Event Completed';
-            } else if (isFull) {
-                buttonText = 'Event Full';
-            }
-            
-            detailRegisterBtn.textContent = buttonText;
-            detailRegisterBtn.className = `px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                isDisabled ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'
-            }`;
-
-            detailRegisterBtn.onclick = (e) => { 
-                e.stopPropagation(); 
-                if (!isDisabled) {
-                    registerForEvent(id); 
+            // Update register button (only if it exists - not for admins)
+            if (detailRegisterBtn) {
+                const isDisabled = isFull || isCompleted;
+                detailRegisterBtn.disabled = isDisabled;
+                
+                let buttonText = 'Register Now';
+                if (isCompleted) {
+                    buttonText = 'Event Completed';
+                } else if (isFull) {
+                    buttonText = 'Event Full';
                 }
-            };
+                
+                detailRegisterBtn.textContent = buttonText;
+                detailRegisterBtn.className = `px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isDisabled ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'
+                }`;
+
+                detailRegisterBtn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    if (!isDisabled) {
+                        registerForEvent(id); 
+                    }
+                };
+            }
 
             detailsModal.classList.remove('hidden');
         }
