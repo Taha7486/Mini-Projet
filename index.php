@@ -170,8 +170,9 @@ $clubs = $club->getAll();
                 <div id="detailImageWrapper" class="relative h-64 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg overflow-hidden hidden">
                     <img id="detailImage" src="" alt="Event image" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-black bg-opacity-20"></div>
-                    <div class="absolute top-4 right-4">
+                    <div class="absolute top-4 right-4 flex flex-col items-end gap-2">
                         <span id="detailClubName" class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-semibold text-gray-800 shadow-lg"></span>
+                        <span id="detailStatusImage" class="px-3 py-1 rounded-full text-xs font-semibold text-white"></span>
                     </div>
                     <div class="absolute bottom-4 left-4 text-white">
                         <h4 id="detailTitleOverlay" class="text-2xl font-bold drop-shadow-lg"></h4>
@@ -181,9 +182,12 @@ $clubs = $club->getAll();
                 <!-- Event Title (when no image) -->
                 <div id="detailTitleSection" class="text-center">
                     <h4 id="detailTitleText" class="text-3xl font-bold text-gray-800 mb-2"></h4>
-                    <div class="flex items-center justify-center gap-2 text-gray-600">
+                    <div class="flex items-center justify-center gap-2 text-gray-600 mb-2">
                         <i class="fas fa-building"></i>
                         <span id="detailClubNameText" class="text-lg font-medium"></span>
+                    </div>
+                    <div class="flex justify-center">
+                        <span id="detailStatusText" class="px-3 py-1 rounded-full text-xs font-semibold text-white"></span>
                     </div>
                 </div>
 
@@ -384,6 +388,30 @@ $clubs = $club->getAll();
             // Update date and time
             document.getElementById('detailDate').textContent = formattedDate;
             document.getElementById('detailTime').textContent = `${formatTime(startTime)} - ${formatTime(endTime)}`;
+
+            // Update status
+            const detailStatusImage = document.getElementById('detailStatusImage');
+            const detailStatusText = document.getElementById('detailStatusText');
+            let statusText = 'Upcoming';
+            let statusClass = 'bg-blue-600';
+            
+            if (isCompleted) {
+                statusText = 'Completed';
+                statusClass = 'bg-gray-600';
+            } else if (now >= new Date(date + ' ' + startTime) && now <= eventEndDateTime) {
+                statusText = 'Ongoing';
+                statusClass = 'bg-green-600';
+            }
+            
+            // Update both status elements
+            if (detailStatusImage) {
+                detailStatusImage.textContent = statusText;
+                detailStatusImage.className = `px-3 py-1 rounded-full text-xs font-semibold text-white ${statusClass}`;
+            }
+            if (detailStatusText) {
+                detailStatusText.textContent = statusText;
+                detailStatusText.className = `px-3 py-1 rounded-full text-xs font-semibold text-white ${statusClass}`;
+            }
 
             // Update location
             document.getElementById('detailLocation').textContent = location;
