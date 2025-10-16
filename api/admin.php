@@ -1,5 +1,5 @@
 <?php
-header('Content-Type: application/json');
+// Content type will be set dynamically depending on request type
 require_once '../config/database.php';
 require_once '../classes/Admin.php';
 require_once '../classes/Club.php';
@@ -12,9 +12,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// Get JSON input
-$input = json_decode(file_get_contents('php://input'), true);
-$action = $input['action'] ?? '';
+// Support both JSON and HTML form submissions
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+$isJson = stripos($contentType, 'application/json') === 0;
+if ($isJson) {
+    header('Content-Type: application/json');
+}
+
+if ($isJson) {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $action = $input['action'] ?? '';
+} else {
+    $input = $_POST;
+    $action = $_POST['action'] ?? '';
+}
 
 $database = new Database();
 $db = $database->getConnection();
@@ -100,11 +111,18 @@ try {
                 throw new Exception('Club name is required');
             }
 
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            if (!$admin->getProfile()) {
+                throw new Exception('Admin profile not found');
+            }
+
             $club = new Club($db);
             $club->nom = $nom;
             $club->description = $description;
 
-            $success = $club->create();
+            $success = $club->create($admin->admin_id);
             if (!$success) {
                 throw new Exception('Failed to create club');
             }
@@ -169,6 +187,7 @@ try {
 
             $accountId = $input['account_id'] ?? null;
             $newRole = $input['new_role'] ?? null;
+            $clubId = $input['club_id'] ?? null;
 
             if (!$accountId || !$newRole) {
                 throw new Exception('Account ID and new role are required');
@@ -186,7 +205,29 @@ try {
                 throw new Exception('Failed to change user role');
             }
 
-            echo json_encode(['success' => true, 'message' => 'User role updated successfully']);
+            // If promoting to organizer and a club is specified, ensure organizer-club link exists
+            if ($newRole === 'organizer' && !empty($clubId)) {
+                // Lookup participant_id by account_id
+                $stmt = $db->prepare("SELECT participant_id FROM participants WHERE account_id = :account_id");
+                $stmt->bindParam(':account_id', $accountId);
+                $stmt->execute();
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($row && !empty($row['participant_id'])) {
+                    $participantId = (int)$row['participant_id'];
+                    // Insert organizer assignment if not exists
+                    $ins = $db->prepare("INSERT IGNORE INTO organizers (participant_id, club_id) VALUES (:pid, :cid)");
+                    $ins->bindParam(':pid', $participantId);
+                    $ins->bindParam(':cid', $clubId);
+                    $ins->execute();
+                }
+            }
+
+            if ($isJson) {
+                echo json_encode(['success' => true, 'message' => 'User role updated successfully']);
+            } else {
+                // Redirect back to admin panel for non-JS form submissions
+                header('Location: ../public/admin-panel.php?role_updated=1');
+            }
             break;
 
         case 'create_admin':
@@ -243,7 +284,11 @@ try {
                 throw new Exception('Failed to delete user');
             }
 
-            echo json_encode(['success' => true, 'message' => 'User deleted successfully']);
+            if ($isJson) {
+                echo json_encode(['success' => true, 'message' => 'User deleted successfully']);
+            } else {
+                header('Location: ../public/admin-panel.php?deleted=1');
+            }
             break;
 
         case 'toggle_user_status':
@@ -286,23 +331,29 @@ try {
             $title = trim($input['title'] ?? '');
             $description = trim($input['description'] ?? '');
             $dateEvent = $input['date_event'] ?? '';
-            $timeEvent = trim($input['time_event'] ?? '');
+            $startTime = trim($input['start_time'] ?? '');
+            $endTime = trim($input['end_time'] ?? '');
             $location = trim($input['location'] ?? '');
             $capacity = (int)($input['capacity'] ?? 0);
             $imageUrl = trim($input['image_url'] ?? '');
             $clubId = $input['club_id'] ?? null;
 
             if (!$eventId || empty($title) || empty($description) || empty($dateEvent) || 
-                empty($timeEvent) || empty($location) || $capacity <= 0 || 
+                empty($startTime) || empty($endTime) || empty($location) || $capacity <= 0 || 
                 empty($imageUrl) || !$clubId) {
                 throw new Exception('All fields are required');
+            }
+
+            // Validate that end time is after start time
+            if ($startTime >= $endTime) {
+                throw new Exception('End time must be after start time');
             }
 
             $admin = new Admin($db);
             $admin->id = $_SESSION['user_id'];
             
             $success = $admin->updateEvent($eventId, $title, $description, $dateEvent, 
-                                        $timeEvent, $location, $capacity, $imageUrl, $clubId);
+                                          $startTime, $endTime, $location, $capacity, $imageUrl, $clubId);
             if (!$success) {
                 throw new Exception('Failed to update event');
             }

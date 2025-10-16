@@ -33,7 +33,7 @@ class AttestationPdfService {
 	private function renderHtml($event, $participant, $organizerName, $registrationId) {
 		$title = htmlspecialchars($event['title']);
 		$date = htmlspecialchars($event['date_event']);
-		$time = htmlspecialchars($event['time_event']);
+		$time = date('g:i A', strtotime($event['start_time'])) . ' - ' . date('g:i A', strtotime($event['end_time']));
 		$location = htmlspecialchars($event['location']);
 		$name = htmlspecialchars($participant['nom'] ?? '');
 		$issueDate = date('Y-m-d');

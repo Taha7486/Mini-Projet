@@ -1,4 +1,4 @@
--- Campus Events Management System Database Schema
+-- EventsHub (Campus Events Management System) Database Schema
 -- Drop existing tables if they exist
 DROP TABLE IF EXISTS pending_signups;
 DROP TABLE IF EXISTS attestations;
@@ -90,7 +90,8 @@ CREATE TABLE events (
     description TEXT NOT NULL,
     location VARCHAR(200) NOT NULL,
     date_event DATE NOT NULL,
-    time_event VARCHAR(50) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
     capacity INT NOT NULL,
     registered_count INT DEFAULT 0,
     image_url TEXT,

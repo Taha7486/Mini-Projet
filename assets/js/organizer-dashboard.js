@@ -9,6 +9,11 @@ function openCreateDialog() {
     document.getElementById('submitBtn').textContent = 'Create Event';
     document.getElementById('eventForm').reset();
     document.getElementById('eventId').value = '';
+    
+    // Reset image selection display
+    document.getElementById('selectedEventImage').classList.add('hidden');
+    document.getElementById('eventImageList').innerHTML = '';
+    
     document.getElementById('eventModal').classList.remove('hidden');
 }
 
@@ -22,13 +27,48 @@ function editEvent(event) {
     document.getElementById('title').value = event.title;
     document.getElementById('description').value = event.description;
     document.getElementById('date_event').value = event.date_event;
-    document.getElementById('time_event').value = event.time_event;
+    document.getElementById('start_time').value = event.start_time;
+    document.getElementById('end_time').value = event.end_time;
     document.getElementById('location').value = event.location;
     document.getElementById('club_id').value = event.club_id;
     document.getElementById('capacity').value = event.capacity;
     
     // Handle image field - keep existing image URL in hidden field
     document.getElementById('image_url').value = event.image_url;
+    
+    // Show current image if it exists and is not a placeholder
+    const selectedImageDiv = document.getElementById('selectedEventImage');
+    const imageListDiv = document.getElementById('eventImageList');
+    
+    if (event.image_url && !event.image_url.includes('no_image_placeholder')) {
+        // Fix image path for display
+        let imagePath = event.image_url;
+        if (imagePath.startsWith('storage/') || imagePath.startsWith('assets/')) {
+            imagePath = '../' + imagePath;
+        }
+        
+        // Show current image in the same format as selected files
+        const currentImageHtml = `
+            <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <img src="${imagePath}" alt="Current image" class="w-12 h-12 object-cover rounded border" onerror="this.src='../assets/images/no_image_placeholder.png'">
+                    <div class="min-w-0>
+                        <span class="block text-sm font-medium text-gray-700 truncate max-w-[150px] sm:max-w-[250px]">Current Image</span>
+                        <span class="text-xs text-gray-500 ml-2">(Click "Choose File" to replace)</span>
+                    </div>
+                </div>
+                <button type="button" onclick="removeCurrentEventImage()" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        imageListDiv.innerHTML = currentImageHtml;
+        selectedImageDiv.classList.remove('hidden');
+    } else {
+        selectedImageDiv.classList.add('hidden');
+    }
+    
     // Clear the file input for new uploads
     document.getElementById('event_image').value = '';
     
@@ -39,11 +79,24 @@ function editEvent(event) {
 function closeEventModal() {
     document.getElementById('eventModal').classList.add('hidden');
     document.getElementById('eventForm').reset();
+    
+    // Reset image selection display
+    document.getElementById('selectedEventImage').classList.add('hidden');
+    document.getElementById('eventImageList').innerHTML = '';
 }
 
 // Submit event form
 document.getElementById('eventForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Validate time inputs
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    
+    if (startTime >= endTime) {
+        alert('End time must be after start time');
+        return;
+    }
     
     const formData = new FormData(e.target);
     const submitBtn = document.getElementById('submitBtn');
@@ -441,7 +494,7 @@ function closeEmailModal() {
 
 function loadParticipantsForEmail(eventId) {
     // Reuse the existing participants loading logic
-    fetch('api/events.php', {
+    fetch('../api/events.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -465,6 +518,8 @@ function loadParticipantsForEmail(eventId) {
                     </label>
                 `).join('');
             }
+        } else {
+            document.getElementById('participantSelection').innerHTML = `<p class="text-red-500">Error: ${data.message || 'Failed to load participants'}</p>`;
         }
     })
     .catch(error => {
@@ -584,6 +639,124 @@ document.addEventListener('change', (e) => {
         } else {
             participantSelection.classList.add('hidden');
         }
+    }
+});
+
+// Event image handling functions
+function displaySelectedEventImage() {
+    const fileInput = document.getElementById('event_image');
+    const selectedImageDiv = document.getElementById('selectedEventImage');
+    const imageListDiv = document.getElementById('eventImageList');
+    
+    if (fileInput.files.length > 0) {
+        selectedImageDiv.classList.remove('hidden');
+        
+        const file = fileInput.files[0];
+        
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            fileInput.value = '';
+            selectedImageDiv.classList.add('hidden');
+            return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a valid image file (JPG, PNG, WebP)');
+            fileInput.value = '';
+            selectedImageDiv.classList.add('hidden');
+            return;
+        }
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageHtml = `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <img src="${e.target.result}" alt="Selected image" class="w-12 h-12 object-cover rounded border">
+                        <div class="min-w-0">
+                            <span class="block text-sm font-medium text-gray-700 truncate max-w-[150px] sm:max-w-[250px]">${file.name}</span>
+                            <span class="text-xs text-gray-500 ml-2">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeEventImage(this)" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            imageListDiv.innerHTML = imageHtml;
+        };
+        
+        reader.readAsDataURL(file);
+    } else {
+        // If no file selected, check if we're in edit mode and should show current image
+        if (editMode) {
+            const imageUrl = document.getElementById('image_url').value;
+            if (imageUrl && !imageUrl.includes('no_image_placeholder')) {
+                // Show current image again
+                let imagePath = imageUrl;
+                if (imagePath.startsWith('storage/') || imagePath.startsWith('assets/')) {
+                    imagePath = '../' + imagePath;
+                }
+                
+                const currentImageHtml = `
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                        <div class="flex items-center gap-2">
+                            <img src="${imagePath}" alt="Current image" class="w-12 h-12 object-cover rounded border" onerror="this.src='../assets/images/no_image_placeholder.png'">
+                            <div>
+                                <span class="text-sm font-medium text-gray-700">Current Image</span>
+                                <span class="text-xs text-gray-500 ml-2">(Click "Choose File" to replace)</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="removeCurrentEventImage()" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                imageListDiv.innerHTML = currentImageHtml;
+                selectedImageDiv.classList.remove('hidden');
+            } else {
+                selectedImageDiv.classList.add('hidden');
+            }
+        } else {
+            selectedImageDiv.classList.add('hidden');
+        }
+    }
+}
+
+function removeEventImage(button) {
+    const fileInput = document.getElementById('event_image');
+    const selectedImageDiv = document.getElementById('selectedEventImage');
+    
+    // Clear the file input
+    fileInput.value = '';
+    
+    // Hide the selected image display
+    selectedImageDiv.classList.add('hidden');
+}
+
+function removeCurrentEventImage() {
+    if (confirm('Are you sure you want to remove the current image?')) {
+        // Set image_url to placeholder to indicate deletion
+        document.getElementById('image_url').value = 'assets/images/no_image_placeholder.png';
+        
+        // Hide the current image display
+        document.getElementById('selectedEventImage').classList.add('hidden');
+        document.getElementById('eventImageList').innerHTML = '';
+    }
+}
+
+// Event image handling event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Event image file input change
+    const eventImageInput = document.getElementById('event_image');
+    if (eventImageInput) {
+        eventImageInput.addEventListener('change', displaySelectedEventImage);
     }
 });
 

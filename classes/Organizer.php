@@ -39,7 +39,7 @@ class Organizer extends Participant {
     public function createEvent($eventData) {
         $query = "INSERT INTO events 
                   SET title=:title, description=:description, location=:location,
-                      date_event=:date_event, time_event=:time_event, capacity=:capacity,
+                      date_event=:date_event, start_time=:start_time, end_time=:end_time, capacity=:capacity,
                       image_url=:image_url, club_id=:club_id, created_by=:created_by";
 
         $stmt = $this->conn->prepare($query);
@@ -47,7 +47,8 @@ class Organizer extends Participant {
         $stmt->bindParam(":description", $eventData['description']);
         $stmt->bindParam(":location", $eventData['location']);
         $stmt->bindParam(":date_event", $eventData['date_event']);
-        $stmt->bindParam(":time_event", $eventData['time_event']);
+        $stmt->bindParam(":start_time", $eventData['start_time']);
+        $stmt->bindParam(":end_time", $eventData['end_time']);
         $stmt->bindParam(":capacity", $eventData['capacity']);
         $stmt->bindParam(":image_url", $eventData['image_url']);
         $stmt->bindParam(":club_id", $eventData['club_id']);
@@ -60,7 +61,7 @@ class Organizer extends Participant {
     public function modifyEvent($event_id, $eventData, $allowAnyOwner = false) {
         $query = "UPDATE events 
                   SET title=:title, description=:description, location=:location,
-                      date_event=:date_event, time_event=:time_event, capacity=:capacity,
+                      date_event=:date_event, start_time=:start_time, end_time=:end_time, capacity=:capacity,
                       image_url=:image_url
                   WHERE event_id=:event_id" . ($allowAnyOwner ? "" : " AND created_by=:created_by");
 
@@ -70,7 +71,8 @@ class Organizer extends Participant {
         $stmt->bindParam(":description", $eventData['description']);
         $stmt->bindParam(":location", $eventData['location']);
         $stmt->bindParam(":date_event", $eventData['date_event']);
-        $stmt->bindParam(":time_event", $eventData['time_event']);
+        $stmt->bindParam(":start_time", $eventData['start_time']);
+        $stmt->bindParam(":end_time", $eventData['end_time']);
         $stmt->bindParam(":capacity", $eventData['capacity']);
         $stmt->bindParam(":image_url", $eventData['image_url']);
         if (!$allowAnyOwner) {
@@ -95,6 +97,22 @@ class Organizer extends Participant {
     // View participants of an event
     public function viewParticipants($event_id) {
         // First check if this organizer owns this event
+        // If organizer_id is not set, try to get it from the first club they manage
+        if (!isset($this->organizer_id) || empty($this->organizer_id)) {
+            $query = "SELECT organizer_id FROM " . $this->org_table . " 
+                      WHERE participant_id = :participant_id LIMIT 1";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":participant_id", $this->participant_id);
+            $stmt->execute();
+            
+            if ($stmt->rowCount() > 0) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $this->organizer_id = $row['organizer_id'];
+            } else {
+                return false; // No organizer_id found
+            }
+        }
+        
         $checkQuery = "SELECT event_id FROM events 
                        WHERE event_id=:event_id AND created_by=:created_by";
         $checkStmt = $this->conn->prepare($checkQuery);

@@ -18,7 +18,7 @@ $clubs = $club->getAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campus Events - Home</title>
+    <title>EventsHub - Campus Events</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -35,11 +35,17 @@ $clubs = $club->getAll();
                         placeholder="Search events..." 
                         class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
             </div>
-            <select id="clubFilter" class="min-w-[300px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+            <select id="clubFilter" class="min-w-[200px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
                 <option value="all">All Clubs</option>
                 <?php foreach ($clubs as $clubItem): ?>
                     <option value="<?= $clubItem['club_id'] ?>"><?= htmlspecialchars($clubItem['nom']) ?></option>
                 <?php endforeach; ?>
+            </select>
+            <select id="statusFilter" class="min-w-[200px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                <option value="all">All Status</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
             </select>
         </div>
     </div>
@@ -48,15 +54,25 @@ $clubs = $club->getAll();
     <main class="container mx-auto px-12 py-6 flex-1"">
         <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <?php foreach ($events as $event): ?>
+                <?php
+                    $now = new DateTime();
+                    $eventStart = new DateTime($event['date_event'].' '.$event['start_time']);
+                    $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
+                    $status = 'upcoming';
+                    if ($now > $eventEnd) { $status = 'completed'; }
+                    elseif ($now >= $eventStart && $now <= $eventEnd) { $status = 'ongoing'; }
+                ?>
                 <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow event-card" 
                      data-club="<?= $event['club_id'] ?>"
+                     data-status="<?= $status ?>"
                      data-title="<?= strtolower($event['title']) ?>"
                      data-description="<?= strtolower($event['description']) ?>"
                      data-event-id="<?= $event['event_id'] ?>"
                      data-event-title="<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>"
                      data-event-description="<?= htmlspecialchars($event['description'], ENT_QUOTES) ?>"
                      data-event-date="<?= htmlspecialchars($event['date_event'], ENT_QUOTES) ?>"
-                     data-event-time="<?= htmlspecialchars($event['time_event'], ENT_QUOTES) ?>"
+                     data-event-start-time="<?= htmlspecialchars($event['start_time'], ENT_QUOTES) ?>"
+                     data-event-end-time="<?= htmlspecialchars($event['end_time'], ENT_QUOTES) ?>"
                      data-event-location="<?= htmlspecialchars($event['location'], ENT_QUOTES) ?>"
                      data-event-capacity="<?= (int)$event['capacity'] ?>"
                      data-event-registered="<?= (int)$event['registered_count'] ?>"
@@ -68,9 +84,20 @@ $clubs = $club->getAll();
                                  alt="<?= htmlspecialchars($event['title']) ?>"
                                  class="w-full h-full object-cover">
                         <?php endif; ?>
-                        <span class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
-                            <?= htmlspecialchars($event['club_name']) ?>
-                        </span>
+                        <div class="absolute top-3 right-3 flex flex-col items-end gap-2">
+                            <span onclick="event.stopPropagation();" 
+                                class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
+                                <?= htmlspecialchars($event['club_name']) ?>
+                            </span>
+                            <span onclick="event.stopPropagation();" 
+                                class="px-3 py-1 rounded-full text-xs font-semibold text-white status-badge <?= 
+                                    $status === 'upcoming' ? 'bg-blue-600' : 
+                                    ($status === 'ongoing' ? 'bg-green-600' : 'bg-gray-600')
+                                ?>" 
+                                data-status="<?= $status ?>">
+                                <?= ucfirst($status) ?>
+                            </span>
+                        </div>
                     </div>
                     
                     <div class="p-4">
@@ -80,7 +107,11 @@ $clubs = $club->getAll();
                         <div class="space-y-2 mb-4">
                             <div class="flex items-center gap-2 text-gray-600 text-sm">
                                 <i class="fas fa-calendar"></i>
-                                <span><?= date('M d, Y', strtotime($event['date_event'])) ?> • <?= htmlspecialchars($event['time_event']) ?></span>
+                                <span><?= date('M d, Y', strtotime($event['date_event'])) ?></span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-600 text-sm">
+                                <i class="fas fa-clock"></i>
+                                <span><?= date('g:i A', strtotime($event['start_time'])) ?> - <?= date('g:i A', strtotime($event['end_time'])) ?></span>
                             </div>
                             <div class="flex items-center gap-2 text-gray-600 text-sm">
                                 <i class="fas fa-map-marker-alt"></i>
@@ -94,12 +125,25 @@ $clubs = $club->getAll();
                         
                         <?php 
                         $spotsLeft = $event['capacity'] - $event['registered_count'];
+                        $now = new DateTime();
+                        $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
+                        $isCompleted = $now > $eventEnd;
                         ?>
+                        <?php if (!isAdmin()): ?>
                         <button onclick="event.stopPropagation(); registerForEvent(<?= $event['event_id'] ?>)" 
-                                class="w-full py-2 bg-black text-white rounded-lg hover:bg-gray-800 <?= $spotsLeft == 0 ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                                <?= $spotsLeft == 0 ? 'disabled' : '' ?>>
-                            <?= $spotsLeft == 0 ? 'Event Full' : 'Register Now' ?>
+                                class="w-full py-2 bg-black text-white rounded-lg hover:bg-gray-800 <?= ($spotsLeft == 0 || $isCompleted) ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                                <?= ($spotsLeft == 0 || $isCompleted) ? 'disabled' : '' ?>>
+                            <?php 
+                            if ($isCompleted) {
+                                echo 'Event Completed';
+                            } elseif ($spotsLeft == 0) {
+                                echo 'Event Full';
+                            } else {
+                                echo 'Register Now';
+                            }
+                            ?>
                         </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -133,8 +177,9 @@ $clubs = $club->getAll();
                 <div id="detailImageWrapper" class="relative h-64 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg overflow-hidden hidden">
                     <img id="detailImage" src="" alt="Event image" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-black bg-opacity-20"></div>
-                    <div class="absolute top-4 right-4">
+                    <div class="absolute top-4 right-4 flex flex-col items-end gap-2">
                         <span id="detailClubName" class="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-semibold text-gray-800 shadow-lg"></span>
+                        <span id="detailStatusImage" class="px-3 py-1 rounded-full text-xs font-semibold text-white"></span>
                     </div>
                     <div class="absolute bottom-4 left-4 text-white">
                         <h4 id="detailTitleOverlay" class="text-2xl font-bold drop-shadow-lg"></h4>
@@ -144,9 +189,12 @@ $clubs = $club->getAll();
                 <!-- Event Title (when no image) -->
                 <div id="detailTitleSection" class="text-center">
                     <h4 id="detailTitleText" class="text-3xl font-bold text-gray-800 mb-2"></h4>
-                    <div class="flex items-center justify-center gap-2 text-gray-600">
+                    <div class="flex items-center justify-center gap-2 text-gray-600 mb-2">
                         <i class="fas fa-building"></i>
                         <span id="detailClubNameText" class="text-lg font-medium"></span>
+                    </div>
+                    <div class="flex justify-center">
+                        <span id="detailStatusText" class="px-3 py-1 rounded-full text-xs font-semibold text-white"></span>
                     </div>
                 </div>
 
@@ -227,9 +275,11 @@ $clubs = $club->getAll();
                     <button onclick="closeEventDetails()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         <i class="fas fa-times mr-2"></i>Close
                     </button>
+                    <?php if (!isAdmin()): ?>
                     <button id="detailRegisterBtn" class="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-user-plus mr-2"></i>Register Now
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -242,6 +292,7 @@ $clubs = $club->getAll();
         // Search and filter functionality
         const searchInput = document.getElementById('searchInput');
         const clubFilter = document.getElementById('clubFilter');
+        const statusFilter = document.getElementById('statusFilter');
         const eventCards = document.querySelectorAll('.event-card');
         const detailsModal = document.getElementById('eventDetailsModal');
         const detailTitle = document.getElementById('detailTitle');
@@ -253,25 +304,33 @@ $clubs = $club->getAll();
         const detailImageWrapper = document.getElementById('detailImageWrapper');
         const detailClubName = document.getElementById('detailClubName');
         const detailRegisterBtn = document.getElementById('detailRegisterBtn');
+        const detailTitleSection = document.getElementById('detailTitleSection');
+        const detailTitleText = document.getElementById('detailTitleText');
+        const detailClubNameText = document.getElementById('detailClubNameText');
+        const detailTitleOverlay = document.getElementById('detailTitleOverlay');
 
         function filterEvents() {
             const searchTerm = searchInput.value.toLowerCase();
             const selectedClub = clubFilter.value;
+            const selectedStatus = statusFilter.value;
 
             eventCards.forEach(card => {
                 const title = card.dataset.title;
                 const description = card.dataset.description;
                 const club = card.dataset.club;
+                const status = card.dataset.status;
 
                 const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
                 const matchesClub = selectedClub === 'all' || club === selectedClub;
+                const matchesStatus = selectedStatus === 'all' || status === selectedStatus;
 
-                card.style.display = (matchesSearch && matchesClub) ? 'block' : 'none';
+                card.style.display = (matchesSearch && matchesClub && matchesStatus) ? 'block' : 'none';
             });
         }
 
         searchInput.addEventListener('input', filterEvents);
         clubFilter.addEventListener('change', filterEvents);
+        statusFilter.addEventListener('change', filterEvents);
 
         // Open details on card click
         eventCards.forEach(card => {
@@ -283,7 +342,8 @@ $clubs = $club->getAll();
             const title = card.dataset.eventTitle || '';
             const desc = card.dataset.eventDescription || '';
             const date = card.dataset.eventDate || '';
-            const time = card.dataset.eventTime || '';
+            const startTime = card.dataset.eventStartTime || '';
+            const endTime = card.dataset.eventEndTime || '';
             const location = card.dataset.eventLocation || '';
             const capacity = parseInt(card.dataset.eventCapacity || '0', 10);
             const registered = parseInt(card.dataset.eventRegistered || '0', 10);
@@ -296,6 +356,11 @@ $clubs = $club->getAll();
             const fillRate = capacity > 0 ? Math.round((registered / capacity) * 100) : 0;
             const isFull = spotsLeft <= 0;
             const isAlmostFull = spotsLeft <= 5 && spotsLeft > 0;
+            
+            // Check if event is completed
+            const now = new Date();
+            const eventEndDateTime = new Date(date + ' ' + endTime);
+            const isCompleted = now > eventEndDateTime;
 
             // Format date
             const eventDate = new Date(date);
@@ -324,10 +389,42 @@ $clubs = $club->getAll();
                 detailTitleText.textContent = title;
                 detailClubNameText.textContent = clubName;
             }
-
+            
+            function formatTime(timeStr) {
+                if (!timeStr) return '';
+                const [hours, minutes] = timeStr.split(':');
+                let h = parseInt(hours, 10);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12 || 12;
+                return `${h}:${minutes} ${ampm}`;
+            }
             // Update date and time
             document.getElementById('detailDate').textContent = formattedDate;
-            document.getElementById('detailTime').textContent = time;
+            document.getElementById('detailTime').textContent = `${formatTime(startTime)} - ${formatTime(endTime)}`;
+
+            // Update status
+            const detailStatusImage = document.getElementById('detailStatusImage');
+            const detailStatusText = document.getElementById('detailStatusText');
+            let statusText = 'Upcoming';
+            let statusClass = 'bg-blue-600';
+            
+            if (isCompleted) {
+                statusText = 'Completed';
+                statusClass = 'bg-gray-600';
+            } else if (now >= new Date(date + ' ' + startTime) && now <= eventEndDateTime) {
+                statusText = 'Ongoing';
+                statusClass = 'bg-green-600';
+            }
+            
+            // Update both status elements
+            if (detailStatusImage) {
+                detailStatusImage.textContent = statusText;
+                detailStatusImage.className = `px-3 py-1 rounded-full text-xs font-semibold text-white ${statusClass}`;
+            }
+            if (detailStatusText) {
+                detailStatusText.textContent = statusText;
+                detailStatusText.className = `px-3 py-1 rounded-full text-xs font-semibold text-white ${statusClass}`;
+            }
 
             // Update location
             document.getElementById('detailLocation').textContent = location;
@@ -336,6 +433,7 @@ $clubs = $club->getAll();
             document.getElementById('detailRegistered').textContent = registered;
             document.getElementById('detailCapacity').textContent = capacity;
             document.getElementById('detailSpotsLeft').textContent = 
+                isCompleted ? 'Event Completed' :
                 spotsLeft === 0 ? 'Event is full' : 
                 spotsLeft === 1 ? '1 spot left' : 
                 `${spotsLeft} spots left`;
@@ -349,19 +447,30 @@ $clubs = $club->getAll();
                 'bg-purple-500'
             }`;
 
-            // Update register button
-            detailRegisterBtn.disabled = isFull;
-            detailRegisterBtn.textContent = isFull ? 'Event Full' : 'Register Now';
-            detailRegisterBtn.className = `px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                isFull ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'
-            }`;
-
-            detailRegisterBtn.onclick = (e) => { 
-                e.stopPropagation(); 
-                if (!isFull) {
-                    registerForEvent(id); 
+            // Update register button (only if it exists - not for admins)
+            if (detailRegisterBtn) {
+                const isDisabled = isFull || isCompleted;
+                detailRegisterBtn.disabled = isDisabled;
+                
+                let buttonText = 'Register Now';
+                if (isCompleted) {
+                    buttonText = 'Event Completed';
+                } else if (isFull) {
+                    buttonText = 'Event Full';
                 }
-            };
+                
+                detailRegisterBtn.textContent = buttonText;
+                detailRegisterBtn.className = `px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isDisabled ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'
+                }`;
+
+                detailRegisterBtn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    if (!isDisabled) {
+                        registerForEvent(id); 
+                    }
+                };
+            }
 
             detailsModal.classList.remove('hidden');
         }
