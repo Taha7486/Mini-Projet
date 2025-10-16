@@ -69,9 +69,28 @@ $clubs = $club->getAll();
                                  alt="<?= htmlspecialchars($event['title']) ?>"
                                  class="w-full h-full object-cover">
                         <?php endif; ?>
-                        <span onclick="event.stopPropagation();" class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
-                            <?= htmlspecialchars($event['club_name']) ?>
-                        </span>
+                        <div class="absolute top-3 right-3 flex flex-col items-end gap-2">
+                            <span onclick="event.stopPropagation();" 
+                                class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
+                                <?= htmlspecialchars($event['club_name']) ?>
+                            </span>
+                            <?php
+                                $now = new DateTime();
+                                $eventStart = new DateTime($event['date_event'].' '.$event['start_time']);
+                                $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
+                                $status = 'upcoming';
+                                if ($now > $eventEnd) { $status = 'completed'; }
+                                elseif ($now >= $eventStart && $now <= $eventEnd) { $status = 'ongoing'; }
+                            ?>
+                            <span onclick="event.stopPropagation();" 
+                                class="px-3 py-1 rounded-full text-xs font-semibold text-white status-badge <?= 
+                                    $status === 'upcoming' ? 'bg-blue-600' : 
+                                    ($status === 'ongoing' ? 'bg-green-600' : 'bg-gray-600')
+                                ?>" 
+                                data-status="<?= $status ?>">
+                                <?= ucfirst($status) ?>
+                            </span>
+                        </div>
                     </div>
                     
                     <div class="p-4">
@@ -99,11 +118,22 @@ $clubs = $club->getAll();
                         
                         <?php 
                         $spotsLeft = $event['capacity'] - $event['registered_count'];
+                        $now = new DateTime();
+                        $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
+                        $isCompleted = $now > $eventEnd;
                         ?>
                         <button onclick="event.stopPropagation(); registerForEvent(<?= $event['event_id'] ?>)" 
-                                class="w-full py-2 bg-black text-white rounded-lg hover:bg-gray-800 <?= $spotsLeft == 0 ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                                <?= $spotsLeft == 0 ? 'disabled' : '' ?>>
-                            <?= $spotsLeft == 0 ? 'Event Full' : 'Register Now' ?>
+                                class="w-full py-2 bg-black text-white rounded-lg hover:bg-gray-800 <?= ($spotsLeft == 0 || $isCompleted) ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                                <?= ($spotsLeft == 0 || $isCompleted) ? 'disabled' : '' ?>>
+                            <?php 
+                            if ($isCompleted) {
+                                echo 'Event Completed';
+                            } elseif ($spotsLeft == 0) {
+                                echo 'Event Full';
+                            } else {
+                                echo 'Register Now';
+                            }
+                            ?>
                         </button>
                     </div>
                 </div>
@@ -247,6 +277,9 @@ $clubs = $club->getAll();
         // Search and filter functionality
         const searchInput = document.getElementById('searchInput');
         const clubFilter = document.getElementById('clubFilter');
+        const statusUpcoming = document.getElementById('statusUpcoming');
+        const statusOngoing = document.getElementById('statusOngoing');
+        const statusCompleted = document.getElementById('statusCompleted');
         const eventCards = document.querySelectorAll('.event-card');
         const detailsModal = document.getElementById('eventDetailsModal');
         const detailTitle = document.getElementById('detailTitle');
@@ -303,6 +336,11 @@ $clubs = $club->getAll();
             const isFull = spotsLeft <= 0;
             const isAlmostFull = spotsLeft <= 5 && spotsLeft > 0;
 
+            // Check if event is completed
+            const now = new Date();
+            const eventEndDateTime = new Date(date + ' ' + endTime);
+            const isCompleted = now > eventEndDateTime;
+
             // Format date
             const eventDate = new Date(date);
             const formattedDate = eventDate.toLocaleDateString('fr-FR', {
@@ -350,6 +388,7 @@ $clubs = $club->getAll();
             document.getElementById('detailRegistered').textContent = registered;
             document.getElementById('detailCapacity').textContent = capacity;
             document.getElementById('detailSpotsLeft').textContent = 
+                isCompleted ? 'Event Completed' :
                 spotsLeft === 0 ? 'Event is full' : 
                 spotsLeft === 1 ? '1 spot left' : 
                 `${spotsLeft} spots left`;
@@ -364,15 +403,24 @@ $clubs = $club->getAll();
             }`;
 
             // Update register button
-            detailRegisterBtn.disabled = isFull;
-            detailRegisterBtn.textContent = isFull ? 'Event Full' : 'Register Now';
+            const isDisabled = isFull || isCompleted;
+            detailRegisterBtn.disabled = isDisabled;
+            
+            let buttonText = 'Register Now';
+            if (isCompleted) {
+                buttonText = 'Event Completed';
+            } else if (isFull) {
+                buttonText = 'Event Full';
+            }
+            
+            detailRegisterBtn.textContent = buttonText;
             detailRegisterBtn.className = `px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                isFull ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'
+                isDisabled ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'
             }`;
 
             detailRegisterBtn.onclick = (e) => { 
                 e.stopPropagation(); 
-                if (!isFull) {
+                if (!isDisabled) {
                     registerForEvent(id); 
                 }
             };
