@@ -13,7 +13,9 @@ $assetsPath = $isInPublicFolder ? '../assets/' : 'assets/';
             <div class="flex items-center gap-8">
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
-                    <img src="<?= $assetsPath ?>images/logo.svg" alt="EventsHub Logo" class="h-12 w-auto object-contain">
+                    <a href="<?= $isInPublicFolder ? '../index.php' : 'index.php' ?>">
+                        <img src="<?= $assetsPath ?>images/logo.svg" alt="EventsHub Logo" class="h-12 w-auto object-contain">
+                    </a>
                 </div>
 
                 <!-- Desktop Navigation Links -->

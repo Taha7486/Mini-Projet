@@ -187,20 +187,49 @@ function handleUpdateEvent($db, $input) {
         throw new Exception('All fields are required');
     }
 
+    // Get current event data to check for existing image
+    $currentEventQuery = "SELECT image_url FROM events WHERE event_id = :event_id";
+    $currentEventStmt = $db->prepare($currentEventQuery);
+    $currentEventStmt->bindParam(':event_id', $event_id);
+    $currentEventStmt->execute();
+    $currentEvent = $currentEventStmt->fetch(PDO::FETCH_ASSOC);
+    $oldImageUrl = $currentEvent ? $currentEvent['image_url'] : null;
+
     // Handle image upload for updates
-    $image_url = $input['image_url'] ?? 'default'; // Keep existing image by default
-    if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] === UPLOAD_ERR_OK) {
+    $image_url = $input['image_url'];
+    
+    // Check if user wants to delete current image (set to placeholder)
+    if ($image_url === 'assets/images/no_image_placeholder.png') {
+        // Delete old image if it exists and is not a placeholder
+        if ($oldImageUrl && 
+            strpos($oldImageUrl, 'no_image_placeholder') === false && 
+            strpos($oldImageUrl, 'storage/event_images/') === 0) {
+            $oldImagePath = '../' . $oldImageUrl;
+            if (file_exists($oldImagePath)) {
+                unlink($oldImagePath);
+            }
+        }
+    } else if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] === UPLOAD_ERR_OK) {
+        // Delete old image if uploading new one
+        if ($oldImageUrl && 
+            strpos($oldImageUrl, 'no_image_placeholder') === false && 
+            strpos($oldImageUrl, 'storage/event_images/') === 0) {
+            $oldImagePath = '../' . $oldImageUrl;
+            if (file_exists($oldImagePath)) {
+                unlink($oldImagePath);
+            }
+        }
         $uploadDir = '../storage/event_images/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
         
         $file = $_FILES['event_image'];
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
         $maxSize = 5 * 1024 * 1024; // 5MB
         
         if (!in_array($file['type'], $allowedTypes)) {
-            throw new Exception('Invalid file type. Only JPG, PNG, GIF, and WebP are allowed.');
+            throw new Exception('Invalid file type. Only JPG, PNG, and WebP are allowed.');
         }
         
         if ($file['size'] > $maxSize) {
