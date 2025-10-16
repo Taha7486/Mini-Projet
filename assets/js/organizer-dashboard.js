@@ -494,7 +494,7 @@ function closeEmailModal() {
 
 function loadParticipantsForEmail(eventId) {
     // Reuse the existing participants loading logic
-    fetch('api/events.php', {
+    fetch('../api/events.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -518,6 +518,8 @@ function loadParticipantsForEmail(eventId) {
                     </label>
                 `).join('');
             }
+        } else {
+            document.getElementById('participantSelection').innerHTML = `<p class="text-red-500">Error: ${data.message || 'Failed to load participants'}</p>`;
         }
     })
     .catch(error => {
