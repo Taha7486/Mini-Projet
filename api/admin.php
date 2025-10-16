@@ -111,11 +111,18 @@ try {
                 throw new Exception('Club name is required');
             }
 
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            
+            if (!$admin->getProfile()) {
+                throw new Exception('Admin profile not found');
+            }
+
             $club = new Club($db);
             $club->nom = $nom;
             $club->description = $description;
 
-            $success = $club->create();
+            $success = $club->create($admin->admin_id);
             if (!$success) {
                 throw new Exception('Failed to create club');
             }
