@@ -22,7 +22,7 @@ if(isLoggedIn()) {
     <div class="flex-1 flex items-center justify-center p-4">
         <div class="w-full max-w-md space-y-4">
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-2xl font-semibold mb-2">Sign In</h2>
+                <h2 class="text-2xl font-semibold mb-2">Login</h2>
                 <p class="text-gray-600 mb-6">Enter your credentials to continue</p>
 
                 <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -50,7 +50,7 @@ if(isLoggedIn()) {
 
                     <button type="submit" id="submitBtn"
                             class="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 font-medium">
-                        Sign In
+                        Log in
                     </button>
                 </form>
 
@@ -82,7 +82,7 @@ if(isLoggedIn()) {
             e.preventDefault();
             
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Signing in...';
+            submitBtn.textContent = 'Logging in...';
             errorMessage.classList.add('hidden');
 
             const formData = new FormData(loginForm);
@@ -113,14 +113,14 @@ if(isLoggedIn()) {
                     errorText.textContent = data.message || 'Invalid email or password';
                     errorMessage.classList.remove('hidden');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Sign In';
+                    submitBtn.textContent = 'Log in';
                 }
             } catch (error) {
                 console.error('Error:', error);
                 errorText.textContent = 'Network error. Please try again.';
                 errorMessage.classList.remove('hidden');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign In';
+                submitBtn.textContent = 'Log in';
             }
         });
     </script>
