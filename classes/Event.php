@@ -8,7 +8,8 @@ class Event {
     public $description;
     public $location;
     public $date_event;
-    public $time_event;
+    public $start_time;
+    public $end_time;
     public $capacity;
     public $registered_count;
     public $image_url;

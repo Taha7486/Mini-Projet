@@ -286,23 +286,29 @@ try {
             $title = trim($input['title'] ?? '');
             $description = trim($input['description'] ?? '');
             $dateEvent = $input['date_event'] ?? '';
-            $timeEvent = trim($input['time_event'] ?? '');
+            $startTime = trim($input['start_time'] ?? '');
+            $endTime = trim($input['end_time'] ?? '');
             $location = trim($input['location'] ?? '');
             $capacity = (int)($input['capacity'] ?? 0);
             $imageUrl = trim($input['image_url'] ?? '');
             $clubId = $input['club_id'] ?? null;
 
             if (!$eventId || empty($title) || empty($description) || empty($dateEvent) || 
-                empty($timeEvent) || empty($location) || $capacity <= 0 || 
+                empty($startTime) || empty($endTime) || empty($location) || $capacity <= 0 || 
                 empty($imageUrl) || !$clubId) {
                 throw new Exception('All fields are required');
+            }
+
+            // Validate that end time is after start time
+            if ($startTime >= $endTime) {
+                throw new Exception('End time must be after start time');
             }
 
             $admin = new Admin($db);
             $admin->id = $_SESSION['user_id'];
             
             $success = $admin->updateEvent($eventId, $title, $description, $dateEvent, 
-                                        $timeEvent, $location, $capacity, $imageUrl, $clubId);
+                                          $startTime, $endTime, $location, $capacity, $imageUrl, $clubId);
             if (!$success) {
                 throw new Exception('Failed to update event');
             }

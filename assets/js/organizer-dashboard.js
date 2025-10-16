@@ -27,7 +27,8 @@ function editEvent(event) {
     document.getElementById('title').value = event.title;
     document.getElementById('description').value = event.description;
     document.getElementById('date_event').value = event.date_event;
-    document.getElementById('time_event').value = event.time_event;
+    document.getElementById('start_time').value = event.start_time;
+    document.getElementById('end_time').value = event.end_time;
     document.getElementById('location').value = event.location;
     document.getElementById('club_id').value = event.club_id;
     document.getElementById('capacity').value = event.capacity;
@@ -49,10 +50,10 @@ function editEvent(event) {
         // Show current image in the same format as selected files
         const currentImageHtml = `
             <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 overflow-hidden">
                     <img src="${imagePath}" alt="Current image" class="w-12 h-12 object-cover rounded border" onerror="this.src='../assets/images/no_image_placeholder.png'">
-                    <div>
-                        <span class="text-sm font-medium text-gray-700">Current Image</span>
+                    <div class="min-w-0>
+                        <span class="block text-sm font-medium text-gray-700 truncate max-w-[150px] sm:max-w-[250px]">Current Image</span>
                         <span class="text-xs text-gray-500 ml-2">(Click "Choose File" to replace)</span>
                     </div>
                 </div>
@@ -87,6 +88,15 @@ function closeEventModal() {
 // Submit event form
 document.getElementById('eventForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Validate time inputs
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    
+    if (startTime >= endTime) {
+        alert('End time must be after start time');
+        return;
+    }
     
     const formData = new FormData(e.target);
     const submitBtn = document.getElementById('submitBtn');
@@ -663,10 +673,10 @@ function displaySelectedEventImage() {
         reader.onload = function(e) {
             const imageHtml = `
                 <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 overflow-hidden">
                         <img src="${e.target.result}" alt="Selected image" class="w-12 h-12 object-cover rounded border">
-                        <div>
-                            <span class="text-sm font-medium text-gray-700">${file.name}</span>
+                        <div class="min-w-0">
+                            <span class="block text-sm font-medium text-gray-700 truncate max-w-[150px] sm:max-w-[250px]">${file.name}</span>
                             <span class="text-xs text-gray-500 ml-2">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                         </div>
                     </div>

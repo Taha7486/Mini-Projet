@@ -361,10 +361,10 @@ class Admin extends Account {
     }
 
     // Update event
-    public function updateEvent($eventId, $title, $description, $dateEvent, $timeEvent, $location, $capacity, $imageUrl, $clubId) {
+    public function updateEvent($eventId, $title, $description, $dateEvent, $startTime, $endTime, $location, $capacity, $imageUrl, $clubId) {
         $query = "UPDATE events 
                   SET title = :title, description = :description, date_event = :date_event, 
-                      time_event = :time_event, location = :location, capacity = :capacity, 
+                      start_time = :start_time, end_time = :end_time, location = :location, capacity = :capacity, 
                       image_url = :image_url, club_id = :club_id
                   WHERE event_id = :event_id";
 
@@ -372,7 +372,8 @@ class Admin extends Account {
         $stmt->bindParam(":title", $title);
         $stmt->bindParam(":description", $description);
         $stmt->bindParam(":date_event", $dateEvent);
-        $stmt->bindParam(":time_event", $timeEvent);
+        $stmt->bindParam(":start_time", $startTime);
+        $stmt->bindParam(":end_time", $endTime);
         $stmt->bindParam(":location", $location);
         $stmt->bindParam(":capacity", $capacity);
         $stmt->bindParam(":image_url", $imageUrl);

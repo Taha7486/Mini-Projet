@@ -95,7 +95,11 @@ $allClubs = $club->getAll();
                     <div class="space-y-2 mb-4">
                         <div class="flex items-center gap-2 text-gray-600 text-sm">
                             <i class="fas fa-calendar"></i>
-                            <span><?= date('M d, Y', strtotime($event['date_event'])) ?> • <?= htmlspecialchars($event['time_event'] ?? 'TBD') ?></span>
+                            <span><?= date('M d, Y', strtotime($event['date_event'])) ?></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-600 text-sm">
+                            <i class="fas fa-clock"></i>
+                            <span><?= date('g:i A', strtotime($event['start_time'])) ?> - <?= date('g:i A', strtotime($event['end_time'])) ?></span>
                         </div>
                         <div class="flex items-center gap-2 text-gray-600 text-sm">
                             <i class="fas fa-map-marker-alt"></i>
@@ -177,13 +181,18 @@ $allClubs = $club->getAll();
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium mb-1">Time *</label>
-                            <input type="text" id="time_event" name="time_event" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black" placeholder="9:00 AM - 5:00 PM">
+                            <label class="block text-sm font-medium mb-1">Location *</label>
+                            <input type="text" id="location" name="location" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black" placeholder="Main Auditorium">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium mb-1">Location *</label>
-                            <input type="text" id="location" name="location" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black" placeholder="Main Auditorium">
+                            <label class="block text-sm font-medium mb-1">Start Time *</label>
+                            <input type="time" id="start_time" name="start_time" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-1">End Time *</label>
+                            <input type="time" id="end_time" name="end_time" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
                         </div>
 
                         <div>
@@ -208,7 +217,8 @@ $allClubs = $club->getAll();
                                        class="block w-full text-sm text-gray-700 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-black file:text-white hover:file:bg-gray-800">
                                 <p class="mt-2 text-sm text-gray-500">Click to choose an image or drag and drop. JPG, PNG, WebP (Max 5MB)</p>
                             </div>
-                            
+                        </div>
+                        <div>
                             <div id="selectedEventImage" class="mt-2 hidden">
                                 <p class="text-sm font-medium text-gray-700 mb-2">Selected image:</p>
                                 <div id="eventImageList" class="space-y-1"></div>

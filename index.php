@@ -56,7 +56,8 @@ $clubs = $club->getAll();
                      data-event-title="<?= htmlspecialchars($event['title'], ENT_QUOTES) ?>"
                      data-event-description="<?= htmlspecialchars($event['description'], ENT_QUOTES) ?>"
                      data-event-date="<?= htmlspecialchars($event['date_event'], ENT_QUOTES) ?>"
-                     data-event-time="<?= htmlspecialchars($event['time_event'], ENT_QUOTES) ?>"
+                     data-event-start-time="<?= htmlspecialchars($event['start_time'], ENT_QUOTES) ?>"
+                     data-event-end-time="<?= htmlspecialchars($event['end_time'], ENT_QUOTES) ?>"
                      data-event-location="<?= htmlspecialchars($event['location'], ENT_QUOTES) ?>"
                      data-event-capacity="<?= (int)$event['capacity'] ?>"
                      data-event-registered="<?= (int)$event['registered_count'] ?>"
@@ -80,7 +81,11 @@ $clubs = $club->getAll();
                         <div class="space-y-2 mb-4">
                             <div class="flex items-center gap-2 text-gray-600 text-sm">
                                 <i class="fas fa-calendar"></i>
-                                <span><?= date('M d, Y', strtotime($event['date_event'])) ?> • <?= htmlspecialchars($event['time_event']) ?></span>
+                                <span><?= date('M d, Y', strtotime($event['date_event'])) ?></span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-600 text-sm">
+                                <i class="fas fa-clock"></i>
+                                <span><?= date('g:i A', strtotime($event['start_time'])) ?> - <?= date('g:i A', strtotime($event['end_time'])) ?></span>
                             </div>
                             <div class="flex items-center gap-2 text-gray-600 text-sm">
                                 <i class="fas fa-map-marker-alt"></i>
