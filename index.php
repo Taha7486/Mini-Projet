@@ -35,11 +35,17 @@ $clubs = $club->getAll();
                         placeholder="Search events..." 
                         class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
             </div>
-            <select id="clubFilter" class="min-w-[300px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+            <select id="clubFilter" class="min-w-[200px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
                 <option value="all">All Clubs</option>
                 <?php foreach ($clubs as $clubItem): ?>
                     <option value="<?= $clubItem['club_id'] ?>"><?= htmlspecialchars($clubItem['nom']) ?></option>
                 <?php endforeach; ?>
+            </select>
+            <select id="statusFilter" class="min-w-[200px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                <option value="all">All Status</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
             </select>
         </div>
     </div>
@@ -48,8 +54,17 @@ $clubs = $club->getAll();
     <main class="container mx-auto px-12 py-6 flex-1"">
         <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <?php foreach ($events as $event): ?>
+                <?php
+                    $now = new DateTime();
+                    $eventStart = new DateTime($event['date_event'].' '.$event['start_time']);
+                    $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
+                    $status = 'upcoming';
+                    if ($now > $eventEnd) { $status = 'completed'; }
+                    elseif ($now >= $eventStart && $now <= $eventEnd) { $status = 'ongoing'; }
+                ?>
                 <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow event-card" 
                      data-club="<?= $event['club_id'] ?>"
+                     data-status="<?= $status ?>"
                      data-title="<?= strtolower($event['title']) ?>"
                      data-description="<?= strtolower($event['description']) ?>"
                      data-event-id="<?= $event['event_id'] ?>"
@@ -74,14 +89,6 @@ $clubs = $club->getAll();
                                 class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
                                 <?= htmlspecialchars($event['club_name']) ?>
                             </span>
-                            <?php
-                                $now = new DateTime();
-                                $eventStart = new DateTime($event['date_event'].' '.$event['start_time']);
-                                $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
-                                $status = 'upcoming';
-                                if ($now > $eventEnd) { $status = 'completed'; }
-                                elseif ($now >= $eventStart && $now <= $eventEnd) { $status = 'ongoing'; }
-                            ?>
                             <span onclick="event.stopPropagation();" 
                                 class="px-3 py-1 rounded-full text-xs font-semibold text-white status-badge <?= 
                                     $status === 'upcoming' ? 'bg-blue-600' : 
@@ -285,9 +292,7 @@ $clubs = $club->getAll();
         // Search and filter functionality
         const searchInput = document.getElementById('searchInput');
         const clubFilter = document.getElementById('clubFilter');
-        const statusUpcoming = document.getElementById('statusUpcoming');
-        const statusOngoing = document.getElementById('statusOngoing');
-        const statusCompleted = document.getElementById('statusCompleted');
+        const statusFilter = document.getElementById('statusFilter');
         const eventCards = document.querySelectorAll('.event-card');
         const detailsModal = document.getElementById('eventDetailsModal');
         const detailTitle = document.getElementById('detailTitle');
@@ -303,21 +308,25 @@ $clubs = $club->getAll();
         function filterEvents() {
             const searchTerm = searchInput.value.toLowerCase();
             const selectedClub = clubFilter.value;
+            const selectedStatus = statusFilter.value;
 
             eventCards.forEach(card => {
                 const title = card.dataset.title;
                 const description = card.dataset.description;
                 const club = card.dataset.club;
+                const status = card.dataset.status;
 
                 const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
                 const matchesClub = selectedClub === 'all' || club === selectedClub;
+                const matchesStatus = selectedStatus === 'all' || status === selectedStatus;
 
-                card.style.display = (matchesSearch && matchesClub) ? 'block' : 'none';
+                card.style.display = (matchesSearch && matchesClub && matchesStatus) ? 'block' : 'none';
             });
         }
 
         searchInput.addEventListener('input', filterEvents);
         clubFilter.addEventListener('change', filterEvents);
+        statusFilter.addEventListener('change', filterEvents);
 
         // Open details on card click
         eventCards.forEach(card => {
