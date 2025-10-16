@@ -57,7 +57,7 @@ if(isLoggedIn()) {
                         <label for="phone_number" class="block text-sm font-medium mb-1">Phone Number *</label>
                         <input type="tel" id="phone_number" name="phone_number" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="+1 (555) 123-4567">
+                               placeholder="+212612345678">
                     </div>
 
                     <div>
@@ -149,6 +149,16 @@ if(isLoggedIn()) {
         const filiereWrapper = document.getElementById('filiereWrapper');
         const filiereSelect = document.getElementById('filiere');
 
+        function safeResetCaptcha() {
+            try {
+                if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') {
+                    window.hcaptcha.reset();
+                }
+            } catch (_) {
+                // no-op: ignore reset issues
+            }
+        }
+
         function updateFiliereVisibility() {
             const y = yearSelect.value;
             const needsFiliere = y === '3' || y === '4' || y === '5';
@@ -182,6 +192,7 @@ if(isLoggedIn()) {
             if (formData.get('password') !== formData.get('confirm_password')) {
                 errorText.textContent = "Passwords don't match";
                 errorMessage.classList.remove('hidden');
+                safeResetCaptcha();
                 return;
             }
 
@@ -236,6 +247,7 @@ if(isLoggedIn()) {
                 } else {
                     errorText.textContent = data.message || 'Failed to create account';
                     errorMessage.classList.remove('hidden');
+                    safeResetCaptcha();
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Create Account';
                 }
@@ -243,6 +255,7 @@ if(isLoggedIn()) {
                 console.error('Error:', error);
                 errorText.textContent = 'Network error. Please try again.';
                 errorMessage.classList.remove('hidden');
+                safeResetCaptcha();
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
             }

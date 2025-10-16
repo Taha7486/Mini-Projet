@@ -518,6 +518,8 @@ function loadParticipantsForEmail(eventId) {
                     </label>
                 `).join('');
             }
+        } else {
+            document.getElementById('participantSelection').innerHTML = `<p class="text-red-500">Error: ${data.message || 'Failed to load participants'}</p>`;
         }
     })
     .catch(error => {

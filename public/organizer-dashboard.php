@@ -41,39 +41,52 @@ $allClubs = $club->getAll();
     <title><?= isAdmin() ? 'Manage All Events' : 'Manage Events' ?> - EventsHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <?php include '../includes/header.php'; ?>
 
     <!-- Main Content -->
     <main class="container mx-auto px-12 py-8 flex-1"">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-xl font-semibold"><?= isAdmin() ? 'All Events' : 'Your Events' ?></h2>
-                <p class="text-gray-600"><?= count($myEvents) ?> <?= count($myEvents) === 1 ? 'event' : 'events' ?> total</p>
-            </div>
-            <?php if (!isAdmin()): ?>
-            <button onclick="openCreateDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
-                <i class="fas fa-plus mr-2"></i>Create Event
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow-sm p-2 flex gap-2 mb-6">
+            <button onclick="orgShowTab('stats')" id="org-tab-stats" class="flex-1 px-4 py-2 rounded-lg hover:bg-gray-100">
+                <i class="fas fa-chart-line mr-2"></i>Stats
             </button>
-            <?php endif; ?>
+            <button onclick="orgShowTab('events')" id="org-tab-events" class="flex-1 px-4 py-2 rounded-lg bg-black text-white">
+                <i class="fas fa-calendar-alt mr-2"></i><?= isAdmin() ? 'All Events' : 'Manage Events' ?>
+            </button>
         </div>
 
-        <?php if (empty($myEvents)): ?>
-        <div class="text-center py-12 bg-white rounded-lg border-2 border-dashed">
-            <i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
-            <h3 class="text-xl font-semibold mb-2"><?= isAdmin() ? 'No events in the system' : 'No events yet' ?></h3>
-            <p class="text-gray-600 mb-4"><?= isAdmin() ? 'No events have been created by organizers yet' : 'Get started by creating your first event' ?></p>
-            <?php if (!isAdmin()): ?>
-            <button onclick="openCreateDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
-                <i class="fas fa-plus mr-2"></i>Create Event
-            </button>
-            <?php endif; ?>
-        </div>
-        <?php else: ?>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <?php foreach ($myEvents as $event): ?>
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- Events Tab Content -->
+        <div id="org-content-events" class="org-tab-content">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-semibold"><?= isAdmin() ? 'All Events' : 'Your Events' ?></h2>
+                    <p class="text-gray-600"><?= count($myEvents) ?> <?= count($myEvents) === 1 ? 'event' : 'events' ?> total</p>
+                </div>
+                <?php if (!isAdmin()): ?>
+                <button onclick="openCreateDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
+                    <i class="fas fa-plus mr-2"></i>Create Event
+                </button>
+                <?php endif; ?>
+            </div>
+
+            <?php if (empty($myEvents)): ?>
+            <div class="text-center py-12 bg-white rounded-lg border-2 border-dashed">
+                <i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2"><?= isAdmin() ? 'No events in the system' : 'No events yet' ?></h3>
+                <p class="text-gray-600 mb-4"><?= isAdmin() ? 'No events have been created by organizers yet' : 'Get started by creating your first event' ?></p>
+                <?php if (!isAdmin()): ?>
+                <button onclick="openCreateDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
+                    <i class="fas fa-plus mr-2"></i>Create Event
+                </button>
+                <?php endif; ?>
+            </div>
+            <?php else: ?>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <?php foreach ($myEvents as $event): ?>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="relative h-48 bg-gray-200">
                     <?php 
                     // Fix image path for public directory
@@ -145,9 +158,31 @@ $allClubs = $club->getAll();
                     </div>
                 </div>
             </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
+
+        <!-- Stats Tab Content -->
+        <div id="org-content-stats" class="org-tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-chart-line text-gray-600"></i><?= isAdmin() ? 'System Stats' : 'Your Event Stats' ?></h3>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg">
+                        <h4 class="text-md font-medium mb-3 flex items-center gap-2"><i class="fas fa-calendar-days text-gray-600"></i>Events by Month</h4>
+                        <canvas id="orgChartEventsByMonth" height="150"></canvas>
+                    </div>
+                    <div class="bg-white rounded-lg">
+                        <h4 class="text-md font-medium mb-3 flex items-center gap-2"><i class="fas fa-users-line text-gray-600"></i>Registrations per Event (Top 10)</h4>
+                        <canvas id="orgChartRegistrationsTop" height="150"></canvas>
+                    </div>
+                    <div class="bg-white rounded-lg xl:col-span-2">
+                        <h4 class="text-md font-medium mb-3 flex items-center gap-2"><i class="fas fa-gauge-simple-high text-gray-600"></i>Capacity Utilization (%)</h4>
+                        <canvas id="orgChartCapacity" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Create/Edit Event Modal -->
@@ -427,6 +462,99 @@ $allClubs = $club->getAll();
     
     <!-- Footer -->
     <?php include '../includes/footer.php'; ?>
-    <script src="../assets/js/organizer-dashboard.js"></script>
+    <script src="../assets/js/organizer-dashboard.js?v=<?= time() ?>"></script>
+    <script>
+        // Build data for organizer charts from PHP
+        const MY_EVENTS = <?php echo json_encode($myEvents, JSON_UNESCAPED_UNICODE); ?>;
+
+        // Simple tabs for organizer dashboard
+        function orgShowTab(tabName) {
+            document.querySelectorAll('.org-tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('org-content-' + tabName).classList.remove('hidden');
+            // toggle button active styles
+            ['events','stats'].forEach(name => {
+                const btn = document.getElementById('org-tab-' + name);
+                if (!btn) return;
+                if (name === tabName) {
+                    btn.classList.add('bg-black','text-white');
+                    btn.classList.remove('hover:bg-gray-100');
+                } else {
+                    btn.classList.remove('bg-black','text-white');
+                    btn.classList.add('hover:bg-gray-100');
+                }
+            });
+
+            if (tabName === 'stats') {
+                maybeRenderOrganizerCharts();
+            }
+        }
+
+        let orgChartsRendered = false;
+        function maybeRenderOrganizerCharts() {
+            if (orgChartsRendered) return;
+            if (!Array.isArray(MY_EVENTS) || MY_EVENTS.length === 0) return;
+            orgChartsRendered = true;
+
+            // Events by month for current year
+            const now = new Date();
+            const year = now.getFullYear();
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const eventsByMonth = new Array(12).fill(0);
+            MY_EVENTS.forEach(ev => {
+                const d = new Date(ev.date_event);
+                if (!isNaN(d) && d.getFullYear() === year) {
+                    eventsByMonth[d.getMonth()]++;
+                }
+            });
+            const mCtx = document.getElementById('orgChartEventsByMonth');
+            if (mCtx) {
+                new Chart(mCtx, {
+                    type: 'bar',
+                    data: { labels: months, datasets: [{ label: `Events in ${year}`, data: eventsByMonth, backgroundColor: '#0EA5E9' }] },
+                    options: { scales: { y: { beginAtZero: true, precision: 0 } } }
+                });
+            }
+
+            // Top registrations per event (top 10)
+            const topEvents = [...MY_EVENTS]
+                .sort((a,b) => (parseInt(b.registered_count||0,10)) - (parseInt(a.registered_count||0,10)))
+                .slice(0, 10);
+            const rCtx = document.getElementById('orgChartRegistrationsTop');
+            if (rCtx) {
+                new Chart(rCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topEvents.map(e => e.title),
+                        datasets: [{ label: 'Registrations', data: topEvents.map(e => parseInt(e.registered_count||0,10)), backgroundColor: '#7C3AED' }]
+                    },
+                    options: { indexAxis: 'y', scales: { x: { beginAtZero: true, precision: 0 } } }
+                });
+            }
+
+            // Capacity utilization percentage per event
+            const capacityData = MY_EVENTS.map(e => {
+                const reg = parseInt(e.registered_count||0,10);
+                const cap = parseInt(e.capacity||0,10);
+                const pct = cap > 0 ? Math.min(100, Math.round((reg / cap) * 100)) : 0;
+                return { title: e.title, pct };
+            }).sort((a,b) => b.pct - a.pct).slice(0, 15);
+            const cCtx = document.getElementById('orgChartCapacity');
+            if (cCtx) {
+                new Chart(cCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: capacityData.map(x => x.title),
+                        datasets: [{ label: 'Utilization %', data: capacityData.map(x => x.pct), backgroundColor: '#10B981' }]
+                    },
+                    options: { indexAxis: 'y', scales: { x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } } }
+                });
+            }
+        }
+
+        // Default to stats tab
+        document.addEventListener('DOMContentLoaded', function() {
+            orgShowTab('stats');
+        });
+    </script>
 </body>
 </html>
