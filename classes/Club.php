@@ -55,13 +55,14 @@ class Club {
     }
 
     // Create club
-    public function create() {
+    public function create($created_by = null) {
         $query = "INSERT INTO " . $this->table . " 
-                  SET nom = :nom, description = :description";
+                  SET nom = :nom, description = :description, created_by = :created_by";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":nom", $this->nom);
         $stmt->bindParam(":description", $this->description);
+        $stmt->bindParam(":created_by", $created_by);
 
         if ($stmt->execute()) {
             $this->club_id = $this->conn->lastInsertId();

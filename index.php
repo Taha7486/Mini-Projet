@@ -304,6 +304,10 @@ $clubs = $club->getAll();
         const detailImageWrapper = document.getElementById('detailImageWrapper');
         const detailClubName = document.getElementById('detailClubName');
         const detailRegisterBtn = document.getElementById('detailRegisterBtn');
+        const detailTitleSection = document.getElementById('detailTitleSection');
+        const detailTitleText = document.getElementById('detailTitleText');
+        const detailClubNameText = document.getElementById('detailClubNameText');
+        const detailTitleOverlay = document.getElementById('detailTitleOverlay');
 
         function filterEvents() {
             const searchTerm = searchInput.value.toLowerCase();

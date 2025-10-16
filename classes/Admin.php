@@ -191,21 +191,58 @@ class Admin extends Account {
 
     // Delete user (by account_id)
     public function deleteUser($account_id) {
-        // Check if it's an admin account
+        // If the account belongs to a participant who is organizer, delete their events first
+        // Find participant_id by account_id
+        $participantStmt = $this->conn->prepare("SELECT participant_id FROM participants WHERE account_id = :account_id");
+        $participantStmt->bindParam(":account_id", $account_id);
+        $participantStmt->execute();
+        $participant = $participantStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($participant && !empty($participant['participant_id'])) {
+            $participantId = (int)$participant['participant_id'];
+            
+            // First, decrement registered_count for events where this participant was registered
+            $decrementStmt = $this->conn->prepare("
+                UPDATE events 
+                SET registered_count = registered_count - 1 
+                WHERE event_id IN (
+                    SELECT event_id FROM registered 
+                    WHERE participant_id = :participant_id
+                ) AND registered_count > 0
+            ");
+            $decrementStmt->bindParam(":participant_id", $participantId);
+            $decrementStmt->execute();
+            
+            // Find organizer ids for this participant
+            $orgStmt = $this->conn->prepare("SELECT organizer_id FROM organizers WHERE participant_id = :pid");
+            $orgStmt->bindParam(":pid", $participantId);
+            $orgStmt->execute();
+            $organizerIds = $orgStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($organizerIds)) {
+                // Delete events created by these organizers (will cascade registered, emails)
+                $in = implode(',', array_fill(0, count($organizerIds), '?'));
+                $delEvents = $this->conn->prepare("DELETE FROM events WHERE created_by IN ($in)");
+                foreach ($organizerIds as $idx => $oid) {
+                    $delEvents->bindValue($idx + 1, (int)$oid, PDO::PARAM_INT);
+                }
+                $delEvents->execute();
+            }
+        }
+
+        // Check if it's an admin account and delete admin record first
         $adminQuery = "SELECT admin_id FROM admins WHERE account_id = :account_id";
         $adminStmt = $this->conn->prepare($adminQuery);
         $adminStmt->bindParam(":account_id", $account_id);
         $adminStmt->execute();
-        
         if ($adminStmt->rowCount() > 0) {
-            // Delete admin first, then account
             $deleteAdminQuery = "DELETE FROM admins WHERE account_id = :account_id";
             $deleteAdminStmt = $this->conn->prepare($deleteAdminQuery);
             $deleteAdminStmt->bindParam(":account_id", $account_id);
             $deleteAdminStmt->execute();
         }
-        
-        // Delete account (will cascade delete participant and other related records)
+
+        // Finally, delete account (cascades participants, organizers)
         $deleteQuery = "DELETE FROM accounts WHERE id = :id";
         $deleteStmt = $this->conn->prepare($deleteQuery);
         $deleteStmt->bindParam(":id", $account_id);
@@ -256,7 +293,13 @@ class Admin extends Account {
                     COALESCE(p.created_at, a.created_at) AS created_at,
                     a.id AS account_id,
                     a.nom,
-                    a.email
+                    a.email,
+                    (
+                      SELECT GROUP_CONCAT(c.nom SEPARATOR ', ')
+                      FROM organizers o
+                      JOIN clubs c ON c.club_id = o.club_id
+                      WHERE o.participant_id = p.participant_id
+                    ) AS organizer_clubs
                   FROM accounts a
                   LEFT JOIN participants p ON p.account_id = a.id
                   LEFT JOIN admins ad ON ad.account_id = a.id

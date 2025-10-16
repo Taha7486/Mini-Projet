@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
 try {
     require_once '../config/database.php';
@@ -352,6 +353,7 @@ function handleGetParticipants($db, $input) {
     if($event_id <= 0) {
         throw new Exception('Event ID is required');
     }
+    
 
     // Handle admin access
     if (isAdmin()) {
@@ -375,12 +377,38 @@ function handleGetParticipants($db, $input) {
             throw new Exception('Organizer profile not found');
         }
 
+        // Check if organizer_id is set
+        if (!isset($organizer->organizer_id) || empty($organizer->organizer_id)) {
+            throw new Exception('Organizer ID not found. User may not be an organizer.');
+        }
+        
+        // Check if user has any events
+        $myEvents = $organizer->getMyEvents();
+        
+        if (empty($myEvents)) {
+            throw new Exception('No events found for this organizer.');
+        }
+        
+        // Check if the requested event belongs to this organizer
+        $eventExists = false;
+        foreach ($myEvents as $event) {
+            if ($event['event_id'] == $event_id) {
+                $eventExists = true;
+                break;
+            }
+        }
+        
+        if (!$eventExists) {
+            throw new Exception('Event not found or you are not authorized to view this event.');
+        }
+
         $participants = $organizer->viewParticipants($event_id);
         
         if($participants !== false) {
             echo json_encode(['success' => true, 'participants' => $participants]);
         } else {
-            throw new Exception('Failed to load participants or you are not authorized');
+            // More specific error message
+            throw new Exception('Failed to load participants. You may not be authorized to view this event or the event does not exist.');
         }
     }
 }

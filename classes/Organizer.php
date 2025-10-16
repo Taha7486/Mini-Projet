@@ -97,6 +97,22 @@ class Organizer extends Participant {
     // View participants of an event
     public function viewParticipants($event_id) {
         // First check if this organizer owns this event
+        // If organizer_id is not set, try to get it from the first club they manage
+        if (!isset($this->organizer_id) || empty($this->organizer_id)) {
+            $query = "SELECT organizer_id FROM " . $this->org_table . " 
+                      WHERE participant_id = :participant_id LIMIT 1";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":participant_id", $this->participant_id);
+            $stmt->execute();
+            
+            if ($stmt->rowCount() > 0) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $this->organizer_id = $row['organizer_id'];
+            } else {
+                return false; // No organizer_id found
+            }
+        }
+        
         $checkQuery = "SELECT event_id FROM events 
                        WHERE event_id=:event_id AND created_by=:created_by";
         $checkStmt = $this->conn->prepare($checkQuery);

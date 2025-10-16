@@ -49,9 +49,9 @@ $assetsPath = $isInPublicFolder ? '../assets/' : 'assets/';
                     <?php endif; ?>
 
                     <!-- Manage Events (for organizers and admins) -->
-                    <?php if (isOrganizer() || isAdmin()): ?>
+                    <?php if (isOrganizer()): ?>
                         <a href="<?= $isInPublicFolder ? 'organizer-dashboard.php' : 'public/organizer-dashboard.php' ?>" class="px-4 py-2 border rounded-lg hover:bg-gray-50 <?= $currentPage === 'organizer-dashboard' ? 'bg-gray-100 font-semibold' : '' ?>">
-                            Manage Events
+                            Organizer Panel
                         </a>
                     <?php endif; ?>
                     
@@ -90,8 +90,8 @@ $assetsPath = $isInPublicFolder ? '../assets/' : 'assets/';
                     <?php if (isAdmin()): ?>
                         <a href="<?= $isInPublicFolder ? 'admin-panel.php' : 'public/admin-panel.php' ?>" class="px-4 py-2 border rounded-lg hover:bg-gray-50 <?= $currentPage === 'admin-panel' ? 'bg-gray-100 font-semibold' : '' ?>">Admin Panel</a>
                     <?php endif; ?>
-                    <?php if (isOrganizer() || isAdmin()): ?>
-                        <a href="<?= $isInPublicFolder ? 'organizer-dashboard.php' : 'public/organizer-dashboard.php' ?>" class="px-4 py-2 border rounded-lg hover:bg-gray-50 <?= $currentPage === 'organizer-dashboard' ? 'bg-gray-100 font-semibold' : '' ?>">Manage Events</a>
+                    <?php if (isOrganizer()): ?>
+                        <a href="<?= $isInPublicFolder ? 'organizer-dashboard.php' : 'public/organizer-dashboard.php' ?>" class="px-4 py-2 border rounded-lg hover:bg-gray-50 <?= $currentPage === 'organizer-dashboard' ? 'bg-gray-100 font-semibold' : '' ?>">Organizer Panel</a>
                     <?php endif; ?>
                     <a href="<?= $isInPublicFolder ? 'profile.php' : 'public/profile.php' ?>" class="px-4 py-2 border rounded-lg hover:bg-gray-50 <?= $currentPage === 'profile' ? 'bg-gray-100 font-semibold' : '' ?>">Profile</a>
                     <a href="<?= $isInPublicFolder ? '../api/auth.php?action=logout' : 'api/auth.php?action=logout' ?>" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">Log Out</a>
