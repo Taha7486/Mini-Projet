@@ -258,6 +258,10 @@ $clubs = $club->getAll();
         const detailImageWrapper = document.getElementById('detailImageWrapper');
         const detailClubName = document.getElementById('detailClubName');
         const detailRegisterBtn = document.getElementById('detailRegisterBtn');
+        const detailTitleSection = document.getElementById('detailTitleSection');
+        const detailTitleText = document.getElementById('detailTitleText');
+        const detailClubNameText = document.getElementById('detailClubNameText');
+        const detailTitleOverlay = document.getElementById('detailTitleOverlay');
 
         function filterEvents() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -288,7 +292,8 @@ $clubs = $club->getAll();
             const title = card.dataset.eventTitle || '';
             const desc = card.dataset.eventDescription || '';
             const date = card.dataset.eventDate || '';
-            const time = card.dataset.eventTime || '';
+            const startTimeRaw = card.dataset.eventStartTime || '';
+            const endTimeRaw = card.dataset.eventEndTime || '';
             const location = card.dataset.eventLocation || '';
             const capacity = parseInt(card.dataset.eventCapacity || '0', 10);
             const registered = parseInt(card.dataset.eventRegistered || '0', 10);
@@ -332,7 +337,16 @@ $clubs = $club->getAll();
 
             // Update date and time
             document.getElementById('detailDate').textContent = formattedDate;
-            document.getElementById('detailTime').textContent = time;
+            const formatTime = (t) => {
+                if (!t) return '';
+                const d = new Date(`1970-01-01T${t}`);
+                if (isNaN(d.getTime())) return t;
+                return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            };
+            const startTime = formatTime(startTimeRaw);
+            const endTime = formatTime(endTimeRaw);
+            const timeRange = startTime && endTime ? `${startTime} - ${endTime}` : (startTime || endTime || '');
+            document.getElementById('detailTime').textContent = timeRange;
 
             // Update location
             document.getElementById('detailLocation').textContent = location;
