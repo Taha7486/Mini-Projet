@@ -330,17 +330,17 @@ $allEvents = $admin->getAllEvents();
                                 <td class="px-4 py-3"><?= date('M d, Y', strtotime($user['created_at'])) ?></td>
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2">
-                                        <?php if ($user['role'] !== 'admin'): ?>
-                                        <button onclick="changeUserRole(<?= $user['account_id'] ?>, '<?= $user['role'] ?>')" 
-                                                class="px-3 py-1 border rounded hover:bg-gray-50 text-sm">
-                                            <i class="fas fa-user-cog mr-1"></i>Change Role
-                                        </button>
-                                        <?php endif; ?>
-                                        
                                         <?php if ($user['account_id'] != $_SESSION['user_id']): ?>
                                         <button onclick="deleteUser(<?= $user['account_id'] ?>, '<?= htmlspecialchars($user['nom']) ?>')" 
                                                 class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
                                             <i class="fas fa-trash mr-1"></i>Delete
+                                        </button>
+                                        <?php endif; ?>
+                                        <!-- I CHANGED !== admin to === organizer | temporary solution (it's wrong btw, needs lot of modifications) -->
+                                        <?php if ($user['role'] === 'organizer'): ?>
+                                        <button onclick="changeUserRole(<?= $user['account_id'] ?>, '<?= $user['role'] ?>')" 
+                                                class="px-3 py-1 border rounded hover:bg-gray-50 text-sm">
+                                            <i class="fas fa-user-cog mr-1"></i>Change Role
                                         </button>
                                         <?php endif; ?>
                                     </div>
