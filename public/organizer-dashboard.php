@@ -96,28 +96,9 @@ $allClubs = $club->getAll();
                     }
                     ?>
                     <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($event['title'] ?? 'Event') ?>" class="w-full h-full object-cover">
-                    <div class="absolute top-3 right-3 flex flex-col items-end gap-2">
-                        <span onclick="event.stopPropagation();" 
-                            class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
-                            <?= htmlspecialchars($event['club_name'] ?? 'Unknown Club') ?>
-                        </span>
-                        <?php
-                            $now = new DateTime();
-                            $eventStart = new DateTime($event['date_event'].' '.$event['start_time']);
-                            $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
-                            $status = 'upcoming';
-                            if ($now > $eventEnd) { $status = 'completed'; }
-                            elseif ($now >= $eventStart && $now <= $eventEnd) { $status = 'ongoing'; }
-                        ?>
-                        <span onclick="event.stopPropagation();" 
-                            class="px-3 py-1 rounded-full text-xs font-semibold text-white status-badge <?= 
-                                $status === 'upcoming' ? 'bg-blue-600' : 
-                                ($status === 'ongoing' ? 'bg-green-600' : 'bg-gray-600')
-                            ?>" 
-                            data-status="<?= $status ?>">
-                            <?= ucfirst($status) ?>
-                        </span>
-                    </div>
+                    <span class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
+                        <?= htmlspecialchars($event['club_name'] ?? 'Unknown Club') ?>
+                    </span>
                 </div>
                 
                 <div class="p-4">

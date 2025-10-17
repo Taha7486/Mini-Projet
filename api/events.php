@@ -427,24 +427,6 @@ function handleRegisterForEvent($db, $input) {
         throw new Exception('Event ID is required');
     }
 
-    // Check if event is completed
-    $eventQuery = "SELECT date_event, start_time, end_time FROM events WHERE event_id = :event_id";
-    $eventStmt = $db->prepare($eventQuery);
-    $eventStmt->bindParam(":event_id", $event_id);
-    $eventStmt->execute();
-    
-    if ($eventStmt->rowCount() === 0) {
-        throw new Exception('Event not found');
-    }
-    
-    $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
-    $now = new DateTime();
-    $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
-    
-    if ($now > $eventEnd) {
-        throw new Exception('Cannot register for completed events');
-    }
-
     $participant = new Participant($db);
     $participant->id = $_SESSION['user_id'];
     if (!$participant->getProfile()) {

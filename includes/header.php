@@ -67,7 +67,7 @@ $assetsPath = $isInPublicFolder ? '../assets/' : 'assets/';
                 <?php else: ?>
                     <!-- Log In and Sign Up for non-logged users -->
                     <a href="<?= $isInPublicFolder ? 'login.php' : 'public/login.php' ?>" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
-                        Log In
+                        Log in
                     </a>
                     <a href="<?= $isInPublicFolder ? 'signup.php' : 'public/signup.php' ?>" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
                         Sign Up
@@ -96,7 +96,7 @@ $assetsPath = $isInPublicFolder ? '../assets/' : 'assets/';
                     <a href="<?= $isInPublicFolder ? 'profile.php' : 'public/profile.php' ?>" class="px-4 py-2 border rounded-lg hover:bg-gray-50 <?= $currentPage === 'profile' ? 'bg-gray-100 font-semibold' : '' ?>">Profile</a>
                     <a href="<?= $isInPublicFolder ? '../api/auth.php?action=logout' : 'api/auth.php?action=logout' ?>" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">Log Out</a>
                 <?php else: ?>
-                    <a href="<?= $isInPublicFolder ? 'login.php' : 'public/login.php' ?>" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">Log In</a>
+                    <a href="<?= $isInPublicFolder ? 'login.php' : 'public/login.php' ?>" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">Log in</a>
                     <a href="<?= $isInPublicFolder ? 'signup.php' : 'public/signup.php' ?>" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Sign Up</a>
                 <?php endif; ?>
             </div>
