@@ -75,11 +75,15 @@ $allClubs = $club->getAll();
     </div>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-12 py-8 flex-1"">
+    <main class="container mx-auto px-12 pb-8 pt-4 flex-1"">
         <div class="flex items-center justify-between mb-6">
             <div>
                 <h2 class="text-xl font-semibold"><?= isAdmin() ? 'All Events' : 'Your Events' ?></h2>
-                <p class="text-gray-600"><?= count($myEvents) ?> <?= count($myEvents) === 1 ? 'event' : 'events' ?> total</p>
+                <p class="text-gray-600">
+                    <span id="eventCount"><?= count($myEvents) ?></span> 
+                    <span id="eventCountText"><?= count($myEvents) === 1 ? 'event' : 'events' ?></span> 
+                    <span id="filterStatus">total</span>
+                </p>
             </div>
             <?php if (!isAdmin()): ?>
             <button onclick="openCreateDialog()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
@@ -497,6 +501,9 @@ $allClubs = $club->getAll();
             const selectedClub = clubFilter.value;
             const selectedStatus = statusFilter.value;
 
+            let visibleCount = 0;
+            let filterStatusText = '';
+
             eventCards.forEach(card => {
                 const title = card.dataset.title;
                 const description = card.dataset.description;
@@ -507,8 +514,42 @@ $allClubs = $club->getAll();
                 const matchesClub = selectedClub === 'all' || club === selectedClub;
                 const matchesStatus = selectedStatus === 'all' || status === selectedStatus;
 
-                card.style.display = (matchesSearch && matchesClub && matchesStatus) ? 'block' : 'none';
+                const isVisible = matchesSearch && matchesClub && matchesStatus;
+                card.style.display = isVisible ? 'block' : 'none';
+                
+                if (isVisible) {
+                    visibleCount++;
+                }
             });
+
+            // Update event count and filter status
+            const eventCountElement = document.getElementById('eventCount');
+            const eventCountTextElement = document.getElementById('eventCountText');
+            const filterStatusElement = document.getElementById('filterStatus');
+
+            if (eventCountElement && eventCountTextElement && filterStatusElement) {
+                eventCountElement.textContent = visibleCount;
+                eventCountTextElement.textContent = visibleCount === 1 ? 'event' : 'events';
+
+                // Build filter status text
+                const filters = [];
+                if (searchTerm) filters.push(`"${searchTerm}"`);
+                if (selectedClub !== 'all') {
+                    const clubName = clubFilter.options[clubFilter.selectedIndex].text;
+                    filters.push(clubName);
+                }
+                if (selectedStatus !== 'all') {
+                    filters.push(selectedStatus);
+                }
+
+                if (filters.length > 0) {
+                    filterStatusText = `matching ${filters.join(', ')}`;
+                } else {
+                    filterStatusText = 'total';
+                }
+
+                filterStatusElement.textContent = filterStatusText;
+            }
         }
 
         // Initialize event filtering when DOM is loaded
