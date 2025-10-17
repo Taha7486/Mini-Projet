@@ -22,11 +22,11 @@ if (isAdmin()) {
     $myEvents = $admin->getAllEvents();
     $myClubs = []; // Admins don't need managed clubs for this view
 } else {
-    // Organizers see only their events
+    // Organizers see all events from clubs they manage
     $organizer = new Organizer($db);
     $organizer->id = $_SESSION['user_id'];
     $organizer->getProfile();
-    $myEvents = $organizer->getMyEvents();
+    $myEvents = $organizer->getAllClubEvents();
     $myClubs = $organizer->getManagedClubs();
 }
 
@@ -44,6 +44,35 @@ $allClubs = $club->getAll();
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <?php include '../includes/header.php'; ?>
+
+    <!-- Search and Filter Section -->
+    <div class="container mx-auto px-12 py-4">
+        <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="eventSearchInput" placeholder="Search events..." 
+                        class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+            </div>
+            <select id="eventClubFilter" class="min-w-[200px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                <option value="all">All Clubs</option>
+                <?php if (isAdmin()): ?>
+                    <?php foreach ($allClubs as $clubItem): ?>
+                        <option value="<?= $clubItem['club_id'] ?>"><?= htmlspecialchars($clubItem['nom']) ?></option>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <?php foreach ($myClubs as $clubItem): ?>
+                        <option value="<?= $clubItem['club_id'] ?>"><?= htmlspecialchars($clubItem['nom']) ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </select>
+            <select id="eventStatusFilter" class="min-w-[200px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
+                <option value="all">All Status</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+    </div>
 
     <!-- Main Content -->
     <main class="container mx-auto px-12 py-8 flex-1"">
@@ -73,7 +102,19 @@ $allClubs = $club->getAll();
         <?php else: ?>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <?php foreach ($myEvents as $event): ?>
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <?php
+                $now = new DateTime();
+                $eventStart = new DateTime($event['date_event'].' '.$event['start_time']);
+                $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
+                $status = 'upcoming';
+                if ($now > $eventEnd) { $status = 'completed'; }
+                elseif ($now >= $eventStart && $now <= $eventEnd) { $status = 'ongoing'; }
+            ?>
+            <div class="bg-white rounded-lg shadow-md overflow-hidden event-card" 
+                 data-club="<?= $event['club_id'] ?>"
+                 data-status="<?= $status ?>"
+                 data-title="<?= strtolower($event['title'] ?? 'untitled event') ?>"
+                 data-description="<?= strtolower($event['description'] ?? 'no description available') ?>">
                 <div class="relative h-48 bg-gray-200">
                     <?php 
                     // Fix image path for public directory
@@ -88,14 +129,6 @@ $allClubs = $club->getAll();
                             class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium">
                             <?= htmlspecialchars($event['club_name'] ?? 'Unknown Club') ?>
                         </span>
-                        <?php
-                            $now = new DateTime();
-                            $eventStart = new DateTime($event['date_event'].' '.$event['start_time']);
-                            $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
-                            $status = 'upcoming';
-                            if ($now > $eventEnd) { $status = 'completed'; }
-                            elseif ($now >= $eventStart && $now <= $eventEnd) { $status = 'ongoing'; }
-                        ?>
                         <span onclick="event.stopPropagation();" 
                             class="px-3 py-1 rounded-full text-xs font-semibold text-white status-badge <?= 
                                 $status === 'upcoming' ? 'bg-blue-600' : 
@@ -447,5 +480,53 @@ $allClubs = $club->getAll();
     <!-- Footer -->
     <?php include '../includes/footer.php'; ?>
     <script src="../assets/js/organizer-dashboard.js"></script>
+    
+    <!-- Event Filtering Script -->
+    <script>
+        function filterEvents() {
+            const searchInput = document.getElementById('eventSearchInput');
+            const clubFilter = document.getElementById('eventClubFilter');
+            const statusFilter = document.getElementById('eventStatusFilter');
+            const eventCards = document.querySelectorAll('.event-card');
+
+            if (!searchInput || !clubFilter || !statusFilter || !eventCards.length) {
+                return; // Elements not found or no events
+            }
+
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedClub = clubFilter.value;
+            const selectedStatus = statusFilter.value;
+
+            eventCards.forEach(card => {
+                const title = card.dataset.title;
+                const description = card.dataset.description;
+                const club = card.dataset.club;
+                const status = card.dataset.status;
+
+                const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+                const matchesClub = selectedClub === 'all' || club === selectedClub;
+                const matchesStatus = selectedStatus === 'all' || status === selectedStatus;
+
+                card.style.display = (matchesSearch && matchesClub && matchesStatus) ? 'block' : 'none';
+            });
+        }
+
+        // Initialize event filtering when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const eventSearchInput = document.getElementById('eventSearchInput');
+            const eventClubFilter = document.getElementById('eventClubFilter');
+            const eventStatusFilter = document.getElementById('eventStatusFilter');
+
+            if (eventSearchInput) {
+                eventSearchInput.addEventListener('input', filterEvents);
+            }
+            if (eventClubFilter) {
+                eventClubFilter.addEventListener('change', filterEvents);
+            }
+            if (eventStatusFilter) {
+                eventStatusFilter.addEventListener('change', filterEvents);
+            }
+        });
+    </script>
 </body>
 </html>

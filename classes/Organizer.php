@@ -138,6 +138,23 @@ class Organizer extends Participant {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Get all events from clubs this organizer manages
+    public function getAllClubEvents() {
+        $query = "SELECT e.*, c.nom as club_name,
+                  (SELECT COUNT(*) FROM registered WHERE event_id = e.event_id) as registered_count
+                  FROM events e
+                  INNER JOIN clubs c ON e.club_id = c.club_id
+                  INNER JOIN organizers o ON c.club_id = o.club_id
+                  WHERE o.participant_id = :participant_id
+                  ORDER BY e.date_event ASC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":participant_id", $this->participant_id);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Get managed clubs
     public function getManagedClubs() {
         $query = "SELECT c.*, o.organizer_id
