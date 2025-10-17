@@ -16,7 +16,9 @@ $admin->id = $_SESSION['user_id'];
 $pendingRequests = $admin->getPendingRequests();
 $requestHistory = $admin->getOrganizerRequestHistory();
 $allUsers = $admin->getAllUsers();
-$allClubs = $admin->getAllClubs();
+$allClubs = $admin->getClubs();
+// Load all events for statistics
+$allEvents = $admin->getAllEvents();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,6 +28,7 @@ $allClubs = $admin->getAllClubs();
     <title>Admin Panel - EventsHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <?php include '../includes/header.php'; ?>
@@ -35,6 +38,9 @@ $allClubs = $admin->getAllClubs();
         <div class="bg-white rounded-lg shadow-sm p-2 flex gap-2">
             <button onclick="showTab('requests')" id="tab-requests" class="flex-1 px-4 py-2 rounded-lg bg-black text-white">
                 <i class="fas fa-user-clock mr-2"></i>Requests (<?= count($pendingRequests) ?>)
+            </button>
+            <button onclick="showTab('stats')" id="tab-stats" class="flex-1 px-4 py-2 rounded-lg hover:bg-gray-100">
+                <i class="fas fa-chart-line mr-2"></i>Stats
             </button>
             <button onclick="showTab('clubs')" id="tab-clubs" class="flex-1 px-4 py-2 rounded-lg hover:bg-gray-100">
                 <i class="fas fa-users mr-2"></i>Clubs (<?= count($allClubs) ?>)
@@ -182,6 +188,28 @@ $allClubs = $admin->getAllClubs();
                         </table>
                     </div>
                     <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="content-stats" class="tab-content hidden">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-user-tag text-gray-600"></i>Users by Role</h2>
+                    <canvas id="chartUsersByRole" height="180" class="mx-auto w-[440px] h-[240px]"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-calendar-days text-gray-600"></i>Events by Month</h2>
+                    <canvas id="chartEventsByMonth" height="220"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-users-line text-gray-600"></i>Registrations per Event (Top 10)</h2>
+                    <canvas id="chartRegistrationsPerEvent" height="240"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-building text-gray-600"></i>Events per Club</h2>
+                    <canvas id="chartEventsPerClub" height="240"></canvas>
                 </div>
             </div>
         </div>
@@ -421,6 +449,123 @@ $allClubs = $admin->getAllClubs();
 
     <!-- Footer -->
     <?php include '../includes/footer.php'; ?>
-    <script src="../assets/js/admin-panel.js"></script>
+    <script src="../assets/js/admin-panel.js?v=<?= time() ?>"></script>
+    <script>
+        // Prepare data for charts from PHP
+        const ADMIN_DATA = {
+            users: <?php echo json_encode($allUsers, JSON_UNESCAPED_UNICODE); ?>,
+            clubs: <?php echo json_encode($allClubs, JSON_UNESCAPED_UNICODE); ?>,
+            events: <?php echo json_encode($allEvents, JSON_UNESCAPED_UNICODE); ?>
+        };
+
+        function renderAdminCharts() {
+            // Users by role
+            const roleCounts = ADMIN_DATA.users.reduce((acc, u) => {
+                const r = (u.role || 'user').toLowerCase();
+                acc[r] = (acc[r] || 0) + 1;
+                return acc;
+            }, {});
+            const usersCtx = document.getElementById('chartUsersByRole');
+            if (usersCtx) {
+                new Chart(usersCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(roleCounts).map(r => r.charAt(0).toUpperCase() + r.slice(1)),
+                        datasets: [{
+                            data: Object.values(roleCounts),
+                            backgroundColor: ['#7C3AED','#0EA5E9','#10B981','#F59E0B','#EF4444']
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+
+            // Events by month (current year)
+            const now = new Date();
+            const year = now.getFullYear();
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const eventsByMonth = new Array(12).fill(0);
+            ADMIN_DATA.events.forEach(ev => {
+                const d = new Date(ev.date_event);
+                if (!isNaN(d) && d.getFullYear() === year) {
+                    eventsByMonth[d.getMonth()]++;
+                }
+            });
+            const eventsMonthCtx = document.getElementById('chartEventsByMonth');
+            if (eventsMonthCtx) {
+                new Chart(eventsMonthCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: `Events in ${year}`,
+                            data: eventsByMonth,
+                            backgroundColor: '#0EA5E9'
+                        }]
+                    },
+                    options: { scales: { y: { beginAtZero: true, precision: 0 } } }
+                });
+            }
+
+            // Registrations per event (top 10)
+            const topEvents = [...ADMIN_DATA.events]
+                .sort((a,b) => (parseInt(b.registered_count||0,10)) - (parseInt(a.registered_count||0,10)))
+                .slice(0, 10);
+            const regCtx = document.getElementById('chartRegistrationsPerEvent');
+            if (regCtx) {
+                new Chart(regCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topEvents.map(e => e.title),
+                        datasets: [{
+                            label: 'Registrations',
+                            data: topEvents.map(e => parseInt(e.registered_count||0,10)),
+                            backgroundColor: '#7C3AED'
+                        }]
+                    },
+                    options: { indexAxis: 'y', scales: { x: { beginAtZero: true, precision: 0 } } }
+                });
+            }
+
+            // Events per club
+            const eventsPerClub = ADMIN_DATA.clubs.map(c => ({ name: c.nom, count: parseInt(c.event_count||0,10) }));
+            const clubCtx = document.getElementById('chartEventsPerClub');
+            if (clubCtx) {
+                new Chart(clubCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: eventsPerClub.map(c => c.name),
+                        datasets: [{
+                            label: 'Events',
+                            data: eventsPerClub.map(c => c.count),
+                            backgroundColor: '#10B981'
+                        }]
+                    },
+                    options: { indexAxis: 'y', scales: { x: { beginAtZero: true, precision: 0 } } }
+                });
+            }
+        }
+
+        // Render charts on first visit to Stats tab
+        let chartsRendered = false;
+        const originalShowTab = window.showTab;
+        window.showTab = function(name) {
+            originalShowTab(name);
+            if (name === 'stats' && !chartsRendered) {
+                chartsRendered = true;
+                renderAdminCharts();
+            }
+        };
+        
+        // Toggle club selector visibility without external JS libs
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.name === 'new_role') {
+                const container = e.target.closest('form')?.querySelector('.admin-role-club');
+                if (!container) return;
+                const show = e.target.value === 'organizer';
+                container.style.display = show ? 'flex' : 'none';
+            }
+        });
+    </script>
 </body>
 </html>
