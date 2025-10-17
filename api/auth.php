@@ -335,7 +335,9 @@ function handleVerifySignup($db, $input) {
     $del->bindValue(":pid", $row['pending_id'], PDO::PARAM_INT);
     $del->execute();
 
-    echo json_encode(['success' => true, 'message' => 'Email verified. You can now log in.']);
+    header('Location: ../public/email-verified.php');
+    exit();
+
 }
 
 function handleLogout() {
