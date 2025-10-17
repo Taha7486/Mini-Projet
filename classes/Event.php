@@ -8,8 +8,7 @@ class Event {
     public $description;
     public $location;
     public $date_event;
-    public $start_time;
-    public $end_time;
+    public $time_event;
     public $capacity;
     public $registered_count;
     public $image_url;
@@ -23,18 +22,13 @@ class Event {
     // Get all events
     public function getAll() {
         $query = "SELECT e.*, c.nom as club_name, 
-                  a.nom as creator_name,
-                  CASE 
-                    WHEN NOW() > CONCAT(e.date_event, ' ', e.end_time) THEN 3
-                    WHEN NOW() >= CONCAT(e.date_event, ' ', e.start_time) AND NOW() <= CONCAT(e.date_event, ' ', e.end_time) THEN 2
-                    ELSE 1
-                  END as status_order
+                  a.nom as creator_name
                   FROM " . $this->table . " e
                   INNER JOIN clubs c ON e.club_id = c.club_id
                   LEFT JOIN organizers o ON e.created_by = o.organizer_id
                   LEFT JOIN participants p ON o.participant_id = p.participant_id
                   LEFT JOIN accounts a ON p.account_id = a.id
-                  ORDER BY status_order ASC, e.date_event ASC, e.start_time ASC";
+                  ORDER BY e.date_event ASC";
 
         $stmt = $this->conn->prepare($query);
         $stmt->execute();

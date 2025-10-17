@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
-ini_set('log_errors', 1);
 
 try {
     require_once '../config/database.php';
@@ -98,19 +97,13 @@ function handleCreateEvent($db, $input) {
     $description = trim($input['description'] ?? '');
     $location = trim($input['location'] ?? '');
     $date_event = $input['date_event'] ?? '';
-    $start_time = $input['start_time'] ?? '';
-    $end_time = $input['end_time'] ?? '';
+    $time_event = $input['time_event'] ?? '';
     $capacity = intval($input['capacity'] ?? 0);
     $club_id = intval($input['club_id'] ?? 0);
 
     if(empty($title) || empty($description) || empty($location) || empty($date_event) || 
-       empty($start_time) || empty($end_time) || $capacity <= 0 || $club_id <= 0) {
+       empty($time_event) || $capacity <= 0 || $club_id <= 0) {
         throw new Exception('All fields are required');
-    }
-
-    // Validate that end time is after start time
-    if ($start_time >= $end_time) {
-        throw new Exception('End time must be after start time');
     }
 
     $organizer = new Organizer($db);
@@ -126,7 +119,7 @@ function handleCreateEvent($db, $input) {
     }
 
     // Handle image upload
-    $image_url = 'assets/images/no_image_placeholder.png'; // Default fallback
+    $image_url = 'assets/images/no_image_placeholder-white_background.png'; // Default fallback
     if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = '../storage/event_images/';
         if (!is_dir($uploadDir)) {
@@ -161,8 +154,7 @@ function handleCreateEvent($db, $input) {
         'description' => $description,
         'location' => $location,
         'date_event' => $date_event,
-        'start_time' => $start_time,
-        'end_time' => $end_time,
+        'time_event' => $time_event,
         'capacity' => $capacity,
         'image_url' => $image_url,
         'club_id' => $club_id
@@ -186,64 +178,29 @@ function handleUpdateEvent($db, $input) {
     $description = trim($input['description'] ?? '');
     $location = trim($input['location'] ?? '');
     $date_event = $input['date_event'] ?? '';
-    $start_time = $input['start_time'] ?? '';
-    $end_time = $input['end_time'] ?? '';
+    $time_event = $input['time_event'] ?? '';
     $capacity = intval($input['capacity'] ?? 0);
     $club_id = intval($input['club_id'] ?? 0);
 
     if($event_id <= 0 || empty($title) || empty($description) || empty($location) || 
-       empty($date_event) || empty($start_time) || empty($end_time) || $capacity <= 0 || $club_id <= 0) {
+       empty($date_event) || empty($time_event) || $capacity <= 0 || $club_id <= 0) {
         throw new Exception('All fields are required');
     }
 
-    // Validate that end time is after start time
-    if ($start_time >= $end_time) {
-        throw new Exception('End time must be after start time');
-    }
-
-    // Get current event data to check for existing image
-    $currentEventQuery = "SELECT image_url FROM events WHERE event_id = :event_id";
-    $currentEventStmt = $db->prepare($currentEventQuery);
-    $currentEventStmt->bindParam(':event_id', $event_id);
-    $currentEventStmt->execute();
-    $currentEvent = $currentEventStmt->fetch(PDO::FETCH_ASSOC);
-    $oldImageUrl = $currentEvent ? $currentEvent['image_url'] : null;
-
     // Handle image upload for updates
-    $image_url = $input['image_url'];
-    
-    // Check if user wants to delete current image (set to placeholder)
-    if ($image_url === 'assets/images/no_image_placeholder.png') {
-        // Delete old image if it exists and is not a placeholder
-        if ($oldImageUrl && 
-            strpos($oldImageUrl, 'no_image_placeholder') === false && 
-            strpos($oldImageUrl, 'storage/event_images/') === 0) {
-            $oldImagePath = '../' . $oldImageUrl;
-            if (file_exists($oldImagePath)) {
-                unlink($oldImagePath);
-            }
-        }
-    } else if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] === UPLOAD_ERR_OK) {
-        // Delete old image if uploading new one
-        if ($oldImageUrl && 
-            strpos($oldImageUrl, 'no_image_placeholder') === false && 
-            strpos($oldImageUrl, 'storage/event_images/') === 0) {
-            $oldImagePath = '../' . $oldImageUrl;
-            if (file_exists($oldImagePath)) {
-                unlink($oldImagePath);
-            }
-        }
+    $image_url = $input['image_url'] ?? 'default'; // Keep existing image by default
+    if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = '../storage/event_images/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
         
         $file = $_FILES['event_image'];
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         $maxSize = 5 * 1024 * 1024; // 5MB
         
         if (!in_array($file['type'], $allowedTypes)) {
-            throw new Exception('Invalid file type. Only JPG, PNG, and WebP are allowed.');
+            throw new Exception('Invalid file type. Only JPG, PNG, GIF, and WebP are allowed.');
         }
         
         if ($file['size'] > $maxSize) {
@@ -267,7 +224,7 @@ function handleUpdateEvent($db, $input) {
         $admin = new Admin($db);
         $admin->id = $_SESSION['user_id'];
         
-        if($admin->updateEvent($event_id, $title, $description, $date_event, $start_time, $end_time, 
+        if($admin->updateEvent($event_id, $title, $description, $date_event, $time_event, 
                               $location, $capacity, $image_url, $club_id)) {
             echo json_encode(['success' => true, 'message' => 'Event updated successfully']);
         } else {
@@ -287,8 +244,7 @@ function handleUpdateEvent($db, $input) {
             'description' => $description,
             'location' => $location,
             'date_event' => $date_event,
-            'start_time' => $start_time,
-            'end_time' => $end_time,
+            'time_event' => $time_event,
             'capacity' => $capacity,
             'image_url' => $image_url,
             'club_id' => $club_id
@@ -353,7 +309,6 @@ function handleGetParticipants($db, $input) {
     if($event_id <= 0) {
         throw new Exception('Event ID is required');
     }
-    
 
     // Handle admin access
     if (isAdmin()) {
@@ -377,38 +332,12 @@ function handleGetParticipants($db, $input) {
             throw new Exception('Organizer profile not found');
         }
 
-        // Check if organizer_id is set
-        if (!isset($organizer->organizer_id) || empty($organizer->organizer_id)) {
-            throw new Exception('Organizer ID not found. User may not be an organizer.');
-        }
-        
-        // Check if user has any events
-        $myEvents = $organizer->getMyEvents();
-        
-        if (empty($myEvents)) {
-            throw new Exception('No events found for this organizer.');
-        }
-        
-        // Check if the requested event belongs to this organizer
-        $eventExists = false;
-        foreach ($myEvents as $event) {
-            if ($event['event_id'] == $event_id) {
-                $eventExists = true;
-                break;
-            }
-        }
-        
-        if (!$eventExists) {
-            throw new Exception('Event not found or you are not authorized to view this event.');
-        }
-
         $participants = $organizer->viewParticipants($event_id);
         
         if($participants !== false) {
             echo json_encode(['success' => true, 'participants' => $participants]);
         } else {
-            // More specific error message
-            throw new Exception('Failed to load participants. You may not be authorized to view this event or the event does not exist.');
+            throw new Exception('Failed to load participants or you are not authorized');
         }
     }
 }
@@ -425,24 +354,6 @@ function handleRegisterForEvent($db, $input) {
     $event_id = intval($input['event_id'] ?? 0);
     if ($event_id <= 0) {
         throw new Exception('Event ID is required');
-    }
-
-    // Check if event is completed
-    $eventQuery = "SELECT date_event, start_time, end_time FROM events WHERE event_id = :event_id";
-    $eventStmt = $db->prepare($eventQuery);
-    $eventStmt->bindParam(":event_id", $event_id);
-    $eventStmt->execute();
-    
-    if ($eventStmt->rowCount() === 0) {
-        throw new Exception('Event not found');
-    }
-    
-    $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
-    $now = new DateTime();
-    $eventEnd = new DateTime($event['date_event'].' '.$event['end_time']);
-    
-    if ($now > $eventEnd) {
-        throw new Exception('Cannot register for completed events');
     }
 
     $participant = new Participant($db);
@@ -488,7 +399,7 @@ function handleSendAttestations($db, $input) {
     }
 
     // Ensure the organizer owns the event and fetch details
-    $checkQuery = "SELECT event_id, title, date_event, start_time, end_time, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
+    $checkQuery = "SELECT event_id, title, date_event, time_event, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
     $checkStmt = $db->prepare($checkQuery);
     $checkStmt->bindParam(":event_id", $event_id);
     $checkStmt->bindParam(":created_by", $organizer->organizer_id);
@@ -554,7 +465,7 @@ function handleSendAttestations($db, $input) {
         $subject = 'Your Attendance Certificate - ' . $event['title'];
         $htmlBody = '<p>Dear ' . htmlspecialchars($toName) . ',</p>' .
                     '<p>Please find attached your attendance certificate for <strong>' . htmlspecialchars($event['title']) . '</strong>.</p>' .
-                    '<p>Event details: ' . htmlspecialchars($event['date_event']) . ' from ' . date('g:i A', strtotime($event['start_time'])) . ' to ' . date('g:i A', strtotime($event['end_time'])) . ' - ' . htmlspecialchars($event['location']) . '.</p>' .
+                    '<p>Event details: ' . htmlspecialchars($event['date_event']) . ' at ' . htmlspecialchars($event['time_event']) . ' - ' . htmlspecialchars($event['location']) . '.</p>' .
                     '<p>Best regards,<br/>' . htmlspecialchars($organizer->nom) . '</p>';
 
         $attachments = [];
@@ -605,7 +516,7 @@ function handleSendEmails($db, $input) {
     }
 
     // Ensure the organizer owns the event
-    $checkQuery = "SELECT event_id, title, date_event, start_time, end_time, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
+    $checkQuery = "SELECT event_id, title, date_event, time_event, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
     $checkStmt = $db->prepare($checkQuery);
     $checkStmt->bindParam(":event_id", $event_id);
     $checkStmt->bindParam(":created_by", $organizer->organizer_id);
@@ -658,7 +569,7 @@ function handleSendEmails($db, $input) {
         // Simple template for now; Attestation attachment to be added later
         $htmlBody = '<p>Dear ' . htmlspecialchars($toName) . ',</p>' .
                     '<p>Thank you for attending <strong>' . htmlspecialchars($event['title']) . '</strong> on ' .
-                    htmlspecialchars($event['date_event']) . ' from ' . date('g:i A', strtotime($event['start_time'])) . ' to ' . date('g:i A', strtotime($event['end_time'])) . ' (' . htmlspecialchars($event['location']) . ').</p>' .
+                    htmlspecialchars($event['date_event']) . ' at ' . htmlspecialchars($event['time_event']) . ' (' . htmlspecialchars($event['location']) . ').</p>' .
                     '<p>Your attendance has been recorded.</p>' .
                     '<p>Best regards,<br/>Campus Events Team</p>';
 
@@ -709,7 +620,7 @@ function handleSendCustomEmail($db, $input) {
     }
 
     // Ensure the organizer owns the event
-    $checkQuery = "SELECT event_id, title, date_event, start_time, end_time, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
+    $checkQuery = "SELECT event_id, title, date_event, time_event, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
     $checkStmt = $db->prepare($checkQuery);
     $checkStmt->bindParam(":event_id", $event_id);
     $checkStmt->bindParam(":created_by", $organizer->organizer_id);
@@ -766,7 +677,7 @@ function handleSendCustomEmail($db, $input) {
                 htmlspecialchars($toName),
                 htmlspecialchars($event['title']),
                 htmlspecialchars($event['date_event']),
-                date('g:i A', strtotime($event['start_time'])) . ' - ' . date('g:i A', strtotime($event['end_time'])),
+                htmlspecialchars($event['time_event']),
                 htmlspecialchars($event['location'])
             ],
             $message
