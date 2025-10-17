@@ -1,0 +1,36 @@
+name: Deploy to InfinityFree (no secrets)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Remove excluded folders
+        run: |
+          rm -rf .git
+          rm -rf config
+          rm -rf vendor
+          rm -rf .github
+
+      - name: Deploy to InfinityFree via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ftpupload.net              # ← ton serveur FTP (vérifie dans le panel InfinityFree)
+          username: if0_40135749            # ← ton nom d’utilisateur FTP
+          password: UIHDX4jD5vlCb    # ← ton mot de passe FTP
+          server-dir: /htdocs/               # ← répertoire distant (souvent /htdocs/)
+          local-dir: ./                      # ← ton dossier local (racine du dépôt)
+          exclude: |
+            **/.git*
+            **/.github/**
+            vendor/**
+            config/**
+            .gitignore
