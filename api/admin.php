@@ -100,11 +100,15 @@ try {
                 throw new Exception('Club name is required');
             }
 
-            $club = new Club($db);
-            $club->nom = $nom;
-            $club->description = $description;
+            // Ensure we have the current admin's admin_id for created_by
+            $admin = new Admin($db);
+            $admin->id = $_SESSION['user_id'];
+            if (!$admin->getProfile()) {
+                throw new Exception('Admin profile not found');
+            }
 
-            $success = $club->create();
+            // Use Admin::createClub to set created_by correctly
+            $success = $admin->createClub($nom, $description);
             if (!$success) {
                 throw new Exception('Failed to create club');
             }
