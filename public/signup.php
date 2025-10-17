@@ -34,33 +34,30 @@ if(isLoggedIn()) {
                         <label for="nom" class="block text-sm font-medium mb-1">Full Name *</label>
                         <input type="text" id="nom" name="nom" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="Adam El Amrani" pattern="[A-Za-zÀ-ÖØ-öø-ÿ ]+" title="Only letters and spaces are allowed">
+                               placeholder="John Doe" pattern="[A-Za-zÀ-ÖØ-öø-ÿ ]+" title="Only letters and spaces are allowed">
+                        <p class="mt-1 text-xs text-gray-500">Only letters and spaces are allowed.</p>
                     </div>
 
                     <div>
                         <label for="email" class="block text-sm font-medium mb-1">Email *</label>
                         <input type="email" id="email" name="email" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="elamrani.adam@etu.uae.ac.ma">
+                               placeholder="john.doe@university.edu">
                     </div>
 
                     <div>
                         <label for="student_id" class="block text-sm font-medium mb-1">Student ID *</label>
                         <input type="text" id="student_id" name="student_id" required inputmode="numeric" maxlength="8" pattern="\d{8}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="210123456" title="Exactly 8 digits">
+                               placeholder="12345678" title="Exactly 8 digits">
+                        <p class="mt-1 text-xs text-gray-500">Exactly 8 digits.</p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium mb-1">Phone Number</label>
-                        <div class="flex gap-2">
-                            <input type="text" value="+212" disabled
-                                class="w-16 sm:w-16 p-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 text-center">
-
-                            <input type="text" id="phone_number" name="phone_number" required
-                                pattern="\d{9}" maxlength="9" placeholder="612345678" title="Enter 9 digits without leading zero"
-                                class="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black">
-                        </div>
+                        <label for="phone_number" class="block text-sm font-medium mb-1">Phone Number *</label>
+                        <input type="tel" id="phone_number" name="phone_number" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                               placeholder="+212612345678">
                     </div>
 
                     <div>
@@ -101,6 +98,7 @@ if(isLoggedIn()) {
                         <input type="password" id="password" name="password" required minlength="6"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                                placeholder="••••••••" title="Must contain at least one uppercase letter and one number">
+                        <p class="mt-1 text-xs text-gray-500">Must include at least one uppercase letter and one number.</p>
                     </div>
 
                     <div>
@@ -220,9 +218,6 @@ if(isLoggedIn()) {
                 effectiveDepartment = formData.get('department') || '';
             }
 
-            const phoneInput = formData.get('phone_number'); // the 9 digits entered by user
-            const fullPhoneNumber = '+212 ' + phoneInput;
-
             const payload = {
                 action: 'request_signup',
                 nom: formData.get('nom'),
@@ -230,7 +225,7 @@ if(isLoggedIn()) {
                 student_id: formData.get('student_id'),
                 year: formData.get('year'),
                 department: effectiveDepartment,
-                phone_number: fullPhoneNumber,
+                phone_number: formData.get('phone_number'),
                 password: formData.get('password'),
                 hcaptcha_token: hToken
             };
@@ -245,10 +240,6 @@ if(isLoggedIn()) {
                 });
 
                 const data = await response.json();
-                // always reset captcha before handling next step
-                if (typeof hcaptcha !== 'undefined') {
-                    hcaptcha.reset();
-                }
 
                 if (data.success) {
                     alert('We sent you a verification link. Please check your email.');
