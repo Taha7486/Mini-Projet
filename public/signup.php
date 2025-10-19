@@ -96,18 +96,24 @@ if(isLoggedIn()) {
                         </select>
                     </div>
 
-                    <div>
+                    <div class="relative">
                         <label for="password" class="block text-sm font-medium mb-1">Password *</label>
                         <input type="password" id="password" name="password" required minlength="6"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black pr-10"
                                placeholder="••••••••" title="Must contain at least one uppercase letter and one number">
+                                <button type="button" id="togglePassword" class="absolute right-3 top-1/2 text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                     </div>
 
-                    <div>
+                    <div class="relative">
                         <label for="confirm_password" class="block text-sm font-medium mb-1">Confirm Password *</label>
                         <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                                placeholder="••••••••">
+                                <button type="button" id="toggleConfirmPassword" class="absolute right-3 top-1/2 text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                     </div>
                 </div>
 
@@ -150,6 +156,11 @@ if(isLoggedIn()) {
         const departmentInput = document.getElementById('department');
         const filiereWrapper = document.getElementById('filiereWrapper');
         const filiereSelect = document.getElementById('filiere');
+
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+        const confirmPasswordInput = document.getElementById('confirm_password');
 
         function updateFiliereVisibility() {
             const y = yearSelect.value;
@@ -255,6 +266,18 @@ if(isLoggedIn()) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
             }
+        });
+
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+            togglePassword.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+        
+        toggleConfirmPassword.addEventListener('click', () => {
+            const type = confirmPasswordInput.type === 'password' ? 'text' : 'password';
+            confirmPasswordInput.type = type;
+            toggleConfirmPassword.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
         });
     </script>
 </body>

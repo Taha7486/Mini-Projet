@@ -37,11 +37,14 @@ if(isLoggedIn()) {
                                placeholder="your.email@university.edu">
                     </div>
 
-                    <div>
+                    <div class="relative">
                         <label for="password" class="block text-sm font-medium mb-1">Password</label>
                         <input type="password" id="password" name="password" required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                               placeholder="••••••••">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black pr-10"
+                            placeholder="••••••••">
+                        <button type="button" id="togglePassword" class="absolute right-3 top-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
 
                     <div class="pt-4 border-t">
@@ -77,6 +80,8 @@ if(isLoggedIn()) {
         const submitBtn = document.getElementById('submitBtn');
         const errorMessage = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -122,6 +127,12 @@ if(isLoggedIn()) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Log in';
             }
+        });
+
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+            togglePassword.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
         });
     </script>
 </body>
