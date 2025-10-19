@@ -830,7 +830,7 @@ function handleGetEmailHistory($db, $input) {
         // Admins can see all email history
         $organizer_id = null;
     } else {
-        // Organizers can only see their own email history
+        // Organizers can see email history for events from clubs they manage
         $organizer = new Organizer($db);
         $organizer->id = $_SESSION['user_id'];
         if (!$organizer->getProfile()) {
@@ -840,24 +840,39 @@ function handleGetEmailHistory($db, $input) {
     }
 
     // Build query
-    $query = "SELECT eh.*, e.title as event_title, a.nom as organizer_name 
-              FROM email_history eh 
-              INNER JOIN events e ON eh.event_id = e.event_id 
-              INNER JOIN organizers o ON eh.organizer_id = o.organizer_id
-              INNER JOIN participants p ON o.participant_id = p.participant_id
-              INNER JOIN accounts a ON p.account_id = a.id
-              WHERE 1=1";
-    
-    $params = [];
-    
-    if ($event_id > 0) {
-        $query .= " AND eh.event_id = :event_id";
-        $params[':event_id'] = $event_id;
-    }
-    
     if ($organizer_id !== null) {
-        $query .= " AND eh.organizer_id = :organizer_id";
-        $params[':organizer_id'] = $organizer_id;
+        // For organizers: show email history for events from clubs they manage
+        $query = "SELECT eh.*, e.title as event_title, a.nom as organizer_name 
+                  FROM email_history eh 
+                  INNER JOIN events e ON eh.event_id = e.event_id 
+                  INNER JOIN organizers o ON eh.organizer_id = o.organizer_id
+                  INNER JOIN participants p ON o.participant_id = p.participant_id
+                  INNER JOIN accounts a ON p.account_id = a.id
+                  INNER JOIN organizers current_org ON e.club_id = current_org.club_id
+                  WHERE current_org.participant_id = :current_participant_id";
+        
+        $params = [':current_participant_id' => $organizer->participant_id];
+        
+        if ($event_id > 0) {
+            $query .= " AND eh.event_id = :event_id";
+            $params[':event_id'] = $event_id;
+        }
+    } else {
+        // For admins: show all email history
+        $query = "SELECT eh.*, e.title as event_title, a.nom as organizer_name 
+                  FROM email_history eh 
+                  INNER JOIN events e ON eh.event_id = e.event_id 
+                  INNER JOIN organizers o ON eh.organizer_id = o.organizer_id
+                  INNER JOIN participants p ON o.participant_id = p.participant_id
+                  INNER JOIN accounts a ON p.account_id = a.id
+                  WHERE 1=1";
+        
+        $params = [];
+        
+        if ($event_id > 0) {
+            $query .= " AND eh.event_id = :event_id";
+            $params[':event_id'] = $event_id;
+        }
     }
     
     $query .= " ORDER BY eh.sent_at DESC LIMIT 50";
