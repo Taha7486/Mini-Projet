@@ -431,7 +431,7 @@ function handleRegisterForEvent($db, $input) {
 }
 
 function handleSendAttestations($db, $input) {
-    // Only organizers who own the event can send attestations; admins are not allowed
+    // Only organizers who manage the club can send attestations; admins are not allowed
     if (!isLoggedIn()) {
         throw new Exception('You must be logged in');
     }
@@ -459,11 +459,14 @@ function handleSendAttestations($db, $input) {
         throw new Exception('Organizer profile not found');
     }
 
-    // Ensure the organizer owns the event and fetch details
-    $checkQuery = "SELECT event_id, title, date_event, start_time, end_time, location FROM events WHERE event_id=:event_id AND created_by=:created_by";
+    // Ensure the organizer manages the club that this event belongs to and fetch details
+    $checkQuery = "SELECT e.event_id, e.title, e.date_event, e.start_time, e.end_time, e.location 
+                   FROM events e
+                   INNER JOIN organizers o ON e.club_id = o.club_id
+                   WHERE e.event_id = :event_id AND o.participant_id = :participant_id";
     $checkStmt = $db->prepare($checkQuery);
     $checkStmt->bindParam(":event_id", $event_id);
-    $checkStmt->bindParam(":created_by", $organizer->organizer_id);
+    $checkStmt->bindParam(":participant_id", $organizer->participant_id);
     $checkStmt->execute();
     $event = $checkStmt->fetch(PDO::FETCH_ASSOC);
     if (!$event) {
