@@ -84,12 +84,23 @@ class Organizer extends Participant {
 
     // Delete event
     public function deleteEvent($event_id) {
-        $query = "DELETE FROM events 
-                  WHERE event_id=:event_id AND created_by=:created_by";
+        // Check if this organizer manages the club that this event belongs to
+        $checkQuery = "SELECT e.event_id 
+                       FROM events e
+                       INNER JOIN organizers o ON e.club_id = o.club_id
+                       WHERE e.event_id = :event_id AND o.participant_id = :participant_id";
+        $checkStmt = $this->conn->prepare($checkQuery);
+        $checkStmt->bindParam(":event_id", $event_id);
+        $checkStmt->bindParam(":participant_id", $this->participant_id);
+        $checkStmt->execute();
 
+        if($checkStmt->rowCount() == 0) {
+            return false;
+        }
+
+        $query = "DELETE FROM events WHERE event_id = :event_id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":event_id", $event_id);
-        $stmt->bindParam(":created_by", $this->organizer_id);
 
         return $stmt->execute();
     }
